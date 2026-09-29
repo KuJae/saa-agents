@@ -1,13 +1,11 @@
 {
-  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
   "python.analysis.typeCheckingMode": "basic",
   "python.analysis.autoImportCompletions": true,
-  "python.analysis.extraPaths": ["${workspaceFolder}"],
-  "python.terminal.activateEnvironment": true,
+  "python.analysis.extraPaths": ["${workspaceFolder}", "${workspaceFolder}/_reference/scripts"],
 
-  "editor.formatOnSave": true,
+  // 끔 — 켜 두면 저장할 때마다 교수님 _reference 코드가 재포맷되어 원본과 달라진다
+  "editor.formatOnSave": false,
   "editor.rulers": [100],
-  "editor.codeActionsOnSave": { "source.organizeImports": "explicit" },
 
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff",
@@ -16,12 +14,10 @@
 
   "files.exclude": {
     "**/__pycache__": true,
-    "**/*.egg-info": true,
-    ".cache": true,
     ".ruff_cache": true
   },
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
 
-  "search.exclude": { ".cache": true, ".venv": true }
+  "search.exclude": { ".venv": true }
 }

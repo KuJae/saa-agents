@@ -23,15 +23,21 @@ description: "자율주행 포트폴리오 파이프라인을 조율한다. (1) 
 | 2 | `alloc-mvo` · `alloc-bl` · `alloc-riskparity` | `portfolio-construct` | **팬아웃** | `alloc_*.json` |
 | 3 | `ic-critic` | `ic-vote` | **팬인** + 생성-검증 | `ic_vote.json` |
 | 4 | `meta-reviewer` | `meta-review` | 파이프라인 | `meta_review.json` |
+| 5 | (오케스트레이터) | — | 기록 | `manifest.json` |
 
-사용자가 "한 사이클 돌려줘"라고 하면 1→4를 순서대로 수행한다.
+사용자가 "한 사이클 돌려줘"라고 하면 1→5를 순서대로 수행한다.
 개별 에이전트를 이름으로 부르면 그 단계만 수행한다.
+
+5단계는 `_reference/scripts/manifest.py {날짜} --model {지금 쓰는 모델 이름}`을 실행한다.
+데이터·`ips.md`·코드·지시문·산출물의 해시와 실행 시각을 남긴다. 이미 manifest가 있는
+RUN은 덮어쓰지 않는다 — 다시 돌릴 때는 `{날짜}-b`처럼 새 RUN ID를 쓴다.
 
 ## 데이터 전달 프로토콜
 
 에이전트끼리 값을 직접 넘기지 않는다. **모두 `runs/{YYYY-MM-DD}/`의 JSON을 거친다.**
 이유는 감사 가능성이다 — 어느 단계의 무엇이 다음에 들어갔는지 파일로 남는다.
 IPS 7.2항(근거를 남기지 않은 안은 무효)이 이 설계를 요구한다.
+`manifest.json`은 그 파일들이 어떤 버전의 입력으로 만들어졌는지를 고정한다.
 
 ## 에러 핸들링
 

@@ -20,7 +20,7 @@ description: 투자정책서(IPS)를 해석해 모든 산출물이 정책 제약
 ## 입력/출력 프로토콜
 - 입력: 비중 벡터 `{ticker: weight}`, 자산 목록
 - 출력: `{"eligible": bool, "violations": [문자열], "checked": [조항번호]}`
-- 구현: `scripts/common.py`의 `load_ips()` · `check_ips()`
+- 구현: `_reference/scripts/common.py`의 `load_ips()` · `check_ips()`
 
 ## 에러 핸들링
 - IPS에서 부록 A를 찾지 못하면 즉시 중단한다. 기본값으로 진행하지 않는다.

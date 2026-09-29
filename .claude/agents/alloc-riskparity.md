@@ -21,7 +21,7 @@ description: 위험기여도 균등(ERC)으로 포트폴리오를 구성한다. 
 ## 입력/출력 프로토콜
 - 입력: `runs/{날짜}/cma.json`, `ips.md`
 - 출력: `runs/{날짜}/alloc_rp.json` — `weights`, `expected`, `ips_violations`
-- 구현: `scripts/alloc_rp.py`
+- 구현: `_reference/scripts/alloc_rp.py`
 
 ## 에러 핸들링
 - 12회 시도가 모두 수렴 실패하면 비중을 내지 않고 실패를 보고한다.

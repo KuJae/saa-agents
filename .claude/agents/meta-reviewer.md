@@ -22,7 +22,7 @@ description: 과거 예측을 실현 수익률과 대조해 다른 에이전트�
 - 입력: `cma.json`, `alloc_*.json`, `ic_vote.json`, 전체 패널
 - 출력: `runs/{날짜}/meta_review.json` — `forecast_error`, `mae`, `portfolios`,
   `proposals`, `auto_applied: false`, `gate`
-- 구현: `scripts/meta_review.py`
+- 구현: `_reference/scripts/meta_review.py`
 
 ## 에러 핸들링
 - 평가구간이 12개월 미만이면 성과 비교를 하지 않고 그 사실만 보고한다.

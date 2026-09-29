@@ -20,7 +20,7 @@ description: 자본시장 가정(CMA)을 생성한다. 기대수익률과 공분
 ## 입력/출력 프로토콜
 - 입력: `data/panel_monthly.csv` (월말, 총수익률 %)
 - 출력: `runs/{날짜}/cma.json` — `mu`, `sigma`, `shrink_intensity`, `as_of`, `method`
-- 구현: `scripts/cma.py`
+- 구현: `_reference/scripts/cma.py`
 
 ## 에러 핸들링
 - 패널의 결측이 한 자산이라도 있으면 중단한다. 보간하지 않는다.

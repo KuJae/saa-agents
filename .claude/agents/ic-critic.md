@@ -21,7 +21,7 @@ description: 투자위원회 관점에서 후보 포트폴리오를 심사하고
 ## 입력/출력 프로토콜
 - 입력: `alloc_*.json` 전부, `ips.md`
 - 출력: `runs/{날짜}/ic_vote.json` — 후보별 `violations`·`scores`·`total`, `winner`, `decision`
-- 구현: `scripts/ic_critic.py`
+- 구현: `_reference/scripts/ic_critic.py`
 
 ## 에러 핸들링
 - 모든 후보가 기각되면 승자를 억지로 만들지 않는다. `winner: null`로 두고
