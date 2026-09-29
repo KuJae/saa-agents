@@ -14,19 +14,14 @@ LLM 에이전트가 자본시장 가정을 산출하고, 22개 방법론으로 �
 사용자(재구)는 팀에서 **인프라와 검증**을 맡습니다. 상태 스키마, 캐싱,
 룩어헤드 검증이 담당 영역입니다. 프롬프트 내용은 연기금 수강 팀원들이 채웁니다.
 
-## 지금 바로 해야 할 일
+## GitHub
 
-**GitHub에 올리기.** 사용자가 이 단계에서 막혀 있습니다. 터미널 명령을 낯설어하니
-한 번에 한 단계씩, 결과를 확인하면서 진행하세요.
+- 레포: <https://github.com/KuJae/saa-agents> (Public, 기본 브랜치 `main`)
+- 목업: <https://kujae.github.io/saa-agents/> (Pages, `main` 브랜치 `/docs` 폴더)
+- `gh` CLI가 KuJae 계정으로 로그인되어 있어 푸시 인증이 따로 필요 없습니다.
+- git 저장소 루트는 이 폴더입니다. 상위 `~/Downloads`에서 git 명령을 치지 마세요.
 
-1. 웹에서 Public 레포 생성 (README·gitignore·license 체크 전부 해제)
-2. `git init` → `git add .` → `git commit` → `git remote add origin` → `git push`
-3. Settings → Pages에서 Branch `main`, 폴더 `/docs` 지정
-4. README 4번째 줄의 `https://아이디.github.io/레포이름/` 자리표시자를 실제 주소로 교체
-
-푸시 인증은 브라우저 창으로 하게 안내하세요. 비밀번호는 2021년부터 막혔습니다.
-
-## 그다음 작업
+## 다음 작업
 
 ```
 확신도 보정 이력 구현      과거 CMA 추정 vs 실현 수익률 대조
