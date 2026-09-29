@@ -1,0 +1,101 @@
+{
+  "run": "2026-09-29",
+  "created_at": "2026-09-29T11:25:43+00:00",
+  "model": "claude-opus-5-5",
+  "git": {
+    "commit": "fb730218d445684a039377f86190d0f7796c3064",
+    "dirty": false
+  },
+  "data": {
+    "path": "data/panel_monthly.csv",
+    "sha256": "38555da585938f9eff7474692c95aaa15a9e0a7499d8e73e0b6fb987ce6bccdc",
+    "rows": 120,
+    "first": "2015-08-01",
+    "last": "2025-07-01"
+  },
+  "as_of": "2022-07-31",
+  "ips": {
+    "path": "ips.md",
+    "sha256": "b700ba608042110be6181b64a886e43c3d9500390a9ea789fd549bee87109061",
+    "constraints": {
+      "asset_max": 0.3,
+      "asset_min": 0.0,
+      "effective_n_min": 4.0,
+      "groups": {
+        "equity": {
+          "members": [
+            "SPY",
+            "EFA",
+            "EEM"
+          ],
+          "min": 0.3,
+          "max": 0.6
+        },
+        "fixed_income": {
+          "members": [
+            "IEF",
+            "TLT",
+            "LQD",
+            "HYG",
+            "TIP"
+          ],
+          "min": 0.25,
+          "max": 0.55
+        },
+        "alternative": {
+          "members": [
+            "VNQ",
+            "GLD",
+            "DBC"
+          ],
+          "min": 0.05,
+          "max": 0.25
+        }
+      },
+      "long_only": true,
+      "real_return_target": 0.045,
+      "vol_cap": 0.1,
+      "mdd_limit": -0.2
+    }
+  },
+  "code": {
+    "_reference/scripts/alloc_bl.py": "fb6aaba9ba840fde7b935f9686c529efd62bf5b984b13ebf6a51eaeb70501751",
+    "_reference/scripts/alloc_mvo.py": "76132323d0f4e06556fcbc826277bbc569e92fd5a23a57a613078011ed21caaf",
+    "_reference/scripts/alloc_rp.py": "ecf7b1218c980c10b802f9fd85e3de7c979811fcc441f0a5e1d1f2844c87b4cb",
+    "_reference/scripts/cma.py": "5b116be25f907027b497fa2bb190dc6b68c345f44665d06689165c74ef653233",
+    "_reference/scripts/common.py": "6c74993f9b65333e2972e05864f030de7a19590bfd29ec718eb6b28b30fdb696",
+    "_reference/scripts/ic_critic.py": "3b76ac12a0fa76aeeda26b3d0efd56b916007d0fc504e1dc4b74cfd014b982a8",
+    "_reference/scripts/manifest.py": "79d67d67194c11c6ad5bcc9567bfdfd4e0d229eb6a04b478a971bf4ea295d97d",
+    "_reference/scripts/meta_review.py": "03cc317cedec8ef8a76d97cf3bb1d730a1d6093974727a2ac080e58b993aadb3"
+  },
+  "prompts": {
+    ".claude/agents/alloc-bl.md": "f280958779895d49234f98a8614fa560675b0f2bd574271b9360559d8d6fe132",
+    ".claude/agents/alloc-mvo.md": "a2ee0cc9e3662c86089b8cef9a71c74771fabc4c968f411b6771a478bc067a7e",
+    ".claude/agents/alloc-riskparity.md": "f49da9cd67502c4efb671c79835ce61c9a74e6ab25726c774091555a6f4d3a01",
+    ".claude/agents/cma-builder.md": "2f56d0c8a237526fa56ad6a1ae288082d5457929ba58ea6ecbe31974abc43afe",
+    ".claude/agents/ic-critic.md": "5532d2195c58633429fb362411de1820d8c6dce71759194ddebc99e0fe14a27b",
+    ".claude/agents/ips-guardian.md": "cadcafcd0208ccb8c3374f3f268b9f87c6a581362900c14220b6d7fa9e58ab2b",
+    ".claude/agents/meta-reviewer.md": "a123efe115b07eecd2e0d3c0ed4d2559f394ba4d6206c2acce2d9d80d2aaca4a",
+    ".claude/skills/cma-build/SKILL.md": "77e3e926ecdd47dcc93acf7031006d7d349118cfdca0380cb87846485558affd",
+    ".claude/skills/harness/SKILL.md": "6697122aa2a24b17d7ee1121150670284a5c2dff0dbf78e52b7ff77439252e58",
+    ".claude/skills/ic-vote/SKILL.md": "82b3d518debc91dfb8131487639b548edacf8f2e48b2fe2a3b4b4a79e608f505",
+    ".claude/skills/ips-check/SKILL.md": "9edf3769eb850ee06811c2c09513ba5f510dc60b56796e57975e3a862f6fd0f0",
+    ".claude/skills/meta-review/SKILL.md": "8cd7f92f155a267717d79010cab055cd419a79238e0e011f8b01eae7872ff3f9",
+    ".claude/skills/portfolio-construct/SKILL.md": "d05b6319a61a8cff61dffba14a38e07c6aab32191f2c1b670cad5033f3972116",
+    ".claude/skills/self-driving-portfolio/SKILL.md": "401288de86e0e8ad0a2e4149ad6f7116b66375c30ca9822aac015c80f7fef06f"
+  },
+  "env": {
+    "python": "3.13.3",
+    "numpy": "2.2.5",
+    "scipy": "1.15.3",
+    "pandas": "2.2.3"
+  },
+  "outputs": {
+    "cma.json": "272e14c506e5756e42eac330fe06b05ba8ae6a23e3cc29489b0586b4f5cd9f38",
+    "alloc_mvo.json": "62b8d4ad21c1edc83fb46eed0c6ab4f3470620e89bf953b87cbbc1f4fd025b6d",
+    "alloc_bl.json": "cb53514bbefda294a1289a31940c2375b48b39e47efeca6edc58b65691c076b4",
+    "alloc_rp.json": "e77b70c3083e5e7f259261c2067090a8b6d7f1fa4f02db6dee11fe960e0c7939",
+    "ic_vote.json": "efc75f7306f8cca31919a8ed2443af695b6a40b8af1b54c6f56c98f1752cdfa5",
+    "meta_review.json": "2b63c503ef85b569704f764980b29e9e7e314b2a4d32c6fef0efa6f2265b80f4"
+  }
+}
