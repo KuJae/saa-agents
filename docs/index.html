@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>자산배분 에이전트 파이프라인 · 설계 목업</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{--ink:#17252E;--paper:#F1F4F3;--panel:#FFF;--rule:#D7DEDB;--jade:#1B6A52;
+--amber:#8F6210;--rust:#9C3626;--mute:#657379;--soft:#EBF0EE;--wash:#F8FAF9;--blue:#2C5A78}
+*{box-sizing:border-box} html,body{margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:Pretendard,-apple-system,'Apple SD Gothic Neo',sans-serif;
+font-size:14px;line-height:1.6;font-feature-settings:"tnum"}
+code,.mono{font-family:'SFMono-Regular',Consolas,monospace;font-size:12.5px}
+.num{font-variant-numeric:tabular-nums}
+h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.01em}
+
+.statusbar{position:sticky;top:0;z-index:20;background:var(--ink);color:#E8EDEB;display:flex;
+align-items:center;border-bottom:3px solid var(--jade);flex-wrap:wrap}
+.sb-brand{padding:11px 20px;font-weight:600;font-size:13px;border-right:1px solid rgba(255,255,255,.14)}
+.sb-brand span{color:#8FA8A0;font-weight:400}
+.sb-item{padding:11px 18px;font-size:12.5px;color:#B6C3BF;border-right:1px solid rgba(255,255,255,.08)}
+.sb-item b{color:#fff;font-weight:500}
+.sb-warn{padding:11px 18px;font-size:12.5px;background:#5A3B1E;color:#F0D9AC;font-weight:500}
+.sb-flag{margin-left:auto;display:flex;align-items:center;gap:9px;padding:0 20px;font-size:12.5px}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:0 0 auto}
+.dot.ok{background:#4CBF95}.dot.warn{background:#E0A83C}.dot.bad{background:#DE6B57}
+
+.shell{display:flex;min-height:calc(100vh - 47px)}
+.rail{width:262px;flex:0 0 262px;background:var(--panel);border-right:1px solid var(--rule);padding:18px 0 40px}
+.rail-h{padding:0 20px 8px;font-size:11px;color:var(--mute);letter-spacing:.02em}
+.rail-h.mid{padding-top:16px;border-top:1px solid var(--soft);margin-top:10px}
+.stage{display:grid;grid-template-columns:24px 1fr auto;gap:9px;align-items:center;padding:8px 20px;
+cursor:pointer;border-left:3px solid transparent;font-size:13px;color:#3C4C55}
+.stage:hover{background:var(--wash)}
+.stage.on{background:var(--soft);border-left-color:var(--jade);color:var(--ink);font-weight:600}
+.stage .n{font-size:10.5px;color:var(--mute);text-align:center;border:1px solid var(--rule);
+border-radius:3px;padding:1px 0;line-height:1.5}
+.stage.on .n{border-color:var(--jade);color:var(--jade)}
+.stage.new .n{border-color:var(--blue);color:var(--blue);background:#EDF3F7}
+.rail-note{margin:16px 20px 0;padding:11px;background:var(--wash);border:1px solid var(--rule);
+font-size:11.5px;color:var(--mute);line-height:1.55}
+.main{flex:1;min-width:0;padding:24px 34px 80px;max-width:1200px}
+
+.screen{display:none}.screen.on{display:block}
+.head{margin-bottom:18px;padding-bottom:15px;border-bottom:1px solid var(--rule)}
+.head h2{font-size:21px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.head p{margin:6px 0 0;color:var(--mute);font-size:13px;max-width:72ch}
+.due{font-size:11px;font-weight:500;padding:2px 8px;border-radius:2px;border:1px solid}
+.due.m{color:var(--jade);border-color:#A9CFC0;background:#F0F7F4}
+.due.f{color:var(--blue);border-color:#AEC6D6;background:#EDF3F7}
+
+.contract{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--rule);
+border:1px solid var(--rule);margin-bottom:20px}
+.contract>div{background:var(--panel);padding:13px 15px}
+.contract h4{margin:0 0 8px;font-size:11.5px;color:var(--mute);font-weight:600}
+.contract ul{margin:0;padding:0;list-style:none}
+.contract li{padding:2.5px 0;font-size:12.5px;display:flex;gap:8px}
+.contract li i{font-style:normal;color:var(--jade)}
+.contract .mono{color:#2E3E47}
+
+.panel{background:var(--panel);border:1px solid var(--rule);margin-bottom:18px}
+.panel>h3{padding:12px 16px;border-bottom:1px solid var(--rule);font-size:13.5px}
+.panel>h3 small{font-weight:400;color:var(--mute);margin-left:8px;font-size:12px}
+.pad{padding:16px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:left;font-weight:600;color:var(--mute);font-size:11.5px;padding:8px 9px;
+border-bottom:1px solid var(--rule);white-space:nowrap}
+td{padding:7px 9px;border-bottom:1px solid var(--soft)}
+tbody tr:last-child td{border-bottom:none}
+td.r,th.r{text-align:right}
+tr.grp td{background:var(--wash);font-weight:600;font-size:11.5px;color:var(--mute)}
+tr.hl td{background:#F0F7F4}
+tr.tot td{border-top:2px solid var(--rule);font-weight:600}
+
+.tag{display:inline-block;padding:1px 7px;border-radius:2px;font-size:11px;font-weight:600}
+.tag.ok{background:#E3F1EB;color:var(--jade)}.tag.warn{background:#F7EEDA;color:var(--amber)}
+.tag.bad{background:#F7E3DF;color:var(--rust)}.tag.n{background:var(--soft);color:var(--mute)}
+.tag.b{background:#EDF3F7;color:var(--blue)}
+
+.bar{height:7px;background:var(--soft);position:relative;min-width:52px;border-radius:1px}
+.bar i{position:absolute;left:0;top:0;bottom:0;background:var(--jade);border-radius:1px}
+.stack{height:16px;display:flex;background:var(--soft);border-radius:1px;overflow:hidden}
+.stack span{display:block;height:100%}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+@media(max-width:1080px){.grid2,.grid3,.grid4,.contract{grid-template-columns:1fr}}
+
+.kpi{background:var(--panel);border:1px solid var(--rule);padding:13px 15px}
+.kpi .l{font-size:11.5px;color:var(--mute)}
+.kpi .v{font-size:24px;font-weight:600;letter-spacing:-.02em;margin-top:2px}
+.kpi .s{font-size:11.5px;color:var(--mute);margin-top:2px}
+
+.note{border-left:3px solid var(--amber);background:#FCF8EF;padding:12px 14px;font-size:12.5px;margin:13px 0}
+.note.bad{border-left-color:var(--rust);background:#FCF1EF}
+.note.ok{border-left-color:var(--jade);background:#F0F7F4}
+.note.b{border-left-color:var(--blue);background:#EFF4F8}
+.note b{display:block;margin-bottom:3px}
+pre{background:var(--wash);border:1px solid var(--rule);padding:12px 14px;margin:0;
+font-size:12px;line-height:1.65;white-space:pre-wrap;overflow-x:auto}
+.chip{display:inline-block;padding:3px 9px;border:1px solid var(--rule);background:var(--panel);
+font-size:11.5px;margin:0 5px 5px 0;border-radius:2px;cursor:pointer;color:#3C4C55}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.hm{display:grid;gap:1px}
+.hm div{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:8.5px;color:#fff}
+.hm .lbl{background:none;color:var(--mute);font-size:9px;aspect-ratio:auto;justify-content:flex-end;
+padding-right:4px;white-space:nowrap}
+.hm .lbt{background:none;color:var(--mute);font-size:9px;aspect-ratio:auto;writing-mode:vertical-rl;
+justify-content:flex-end;padding-bottom:3px}
+.crit{border:1px solid var(--rule);background:var(--panel);padding:11px 13px;margin-bottom:9px}
+.crit .who{font-size:11.5px;color:var(--jade);font-weight:600;margin-bottom:4px}
+.crit .who span{color:var(--mute);font-weight:400;margin-left:6px}
+.crit p{margin:0;font-size:12.5px}
+.memo{background:var(--panel);border:1px solid var(--rule);padding:26px 32px;font-size:13px;
+line-height:1.85;max-width:78ch}
+.memo h4{margin:0 0 3px;font-size:16px}
+.memo .meta{color:var(--mute);font-size:12px;padding-bottom:13px;margin-bottom:15px;border-bottom:1px solid var(--rule)}
+.memo h5{margin:19px 0 6px;font-size:13px}
+.memo p{margin:0 0 9px}
+.memo .tbl{margin:10px 0 14px;border:1px solid var(--rule)}
+.sig{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--soft)}
+.sig:last-child{border-bottom:none}
+.sig .d{margin-top:6px}
+.sig .t{font-size:12.5px;font-weight:600}
+.sig .b{font-size:12px;color:var(--mute);line-height:1.55}
+.lg{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:#3C4C55;margin-bottom:8px}
+.lg i{display:inline-block;width:16px;height:3px;margin-right:5px;vertical-align:middle}
+</style>
+</head>
+<body>
+
+<div class="statusbar">
+  <div class="sb-brand">자산배분 에이전트 파이프라인 <span>· 설계 목업 v0.5</span></div>
+  <div class="sb-warn">가상 데이터 — 실제 운용 자료가 아닙니다</div>
+  <div class="sb-item">실행 <b class="mono">RUN-2026Q3-014</b></div>
+  <div class="sb-item">IPS <b class="mono">v4.2</b></div>
+  <div class="sb-item">에이전트 <b>54</b></div>
+  <div class="sb-flag"><span class="dot warn"></span> 검토 3건</div>
+</div>
+
+<div class="shell">
+<nav class="rail">
+  <div class="rail-h">중간발표까지 · 10월 17일</div>
+  <div class="stage on" data-s="s1"><span class="n">1</span><span>실행 개요</span><span class="dot ok"></span></div>
+  <div class="stage" data-s="s2"><span class="n">2</span><span>투자정책서(IPS)</span><span class="dot warn"></span></div>
+  <div class="stage" data-s="s3"><span class="n">3</span><span>매크로 에이전트</span><span class="dot ok"></span></div>
+  <div class="stage" data-s="s4"><span class="n">4</span><span>자산군 에이전트 · CMA</span><span class="dot warn"></span></div>
+  <div class="stage" data-s="s5"><span class="n">5</span><span>공분산 에이전트</span><span class="dot ok"></span></div>
+  <div class="stage" data-s="s6"><span class="n">6</span><span>포트폴리오 구축</span><span class="dot ok"></span></div>
+  <div class="stage" data-s="s7"><span class="n">7</span><span>상호 검토 · 순위 투표</span><span class="dot ok"></span></div>
+  <div class="rail-h mid">최종발표까지 · 12월 12일</div>
+  <div class="stage new" data-s="s8"><span class="n">8</span><span>위험관리 에이전트</span><span class="dot warn"></span></div>
+  <div class="stage" data-s="s9"><span class="n">9</span><span>CIO 결합 · 이사회 보고</span><span class="dot ok"></span></div>
+  <div class="stage new" data-s="s10"><span class="n">10</span><span>백테스트 검증</span><span class="dot bad"></span></div>
+  <div class="stage" data-s="s11"><span class="n">11</span><span>룩어헤드 · 보정 검증</span><span class="dot bad"></span></div>
+  <div class="rail-note">화면마다 상단의 <b>입력 / 출력 계약</b>이 에이전트 간 인터페이스 명세입니다.
+    구현 착수 전 이 스키마를 팀에서 확정하세요.</div>
+</nav>
+
+<main class="main">
+
+<!-- 1 ─────────────── -->
+<section class="screen on" id="s1">
+  <div class="head"><h2>실행 개요 <span class="due m">중간발표</span></h2>
+    <p>2026년 3분기 전략적 자산배분 정기 재검토. 54개 에이전트가 IPS v4.2의 통제 아래 자본시장 가정을
+       산출하고, 22개 방법론으로 구성한 포트폴리오를 순위 투표와 위험 심사를 거쳐 결합했습니다.</p></div>
+
+  <div class="grid4" style="margin-bottom:18px">
+    <div class="kpi"><div class="l">결합 포트폴리오 기대수익률</div><div class="v num" id="k1">—</div>
+      <div class="s">시장균형 대비 −0.56%p</div></div>
+    <div class="kpi"><div class="l">기대 변동성</div><div class="v num" id="k2">—</div>
+      <div class="s">시장균형 대비 −2.05%p</div></div>
+    <div class="kpi"><div class="l">결합에 참여한 방법론</div><div class="v num">7</div>
+      <div class="s">22개 중 IPS·위험심사 통과</div></div>
+    <div class="kpi"><div class="l">백테스트 신뢰도</div><div class="v num" style="color:var(--rust)">낮음</div>
+      <div class="s">룩어헤드 확인 · 화면 10</div></div>
+  </div>
+
+  <div class="grid2">
+    <div class="panel"><h3>결합 포트폴리오 <small>7개 방법론 가중 결합</small></h3>
+      <div class="pad"><table id="t-final"></table></div></div>
+    <div>
+      <div class="panel"><h3>단계별 실행 결과</h3><div class="pad" id="t-stages"></div></div>
+      <div class="panel"><h3>메타 에이전트 <small>예측 대비 실현 · 자기수정 이력</small></h3>
+        <div class="pad"><table>
+          <thead><tr><th>실행</th><th class="r">예측</th><th class="r">실현</th><th class="r">오차</th><th>조치</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">2025Q3</td><td class="r num">5.10%</td><td class="r num">3.82%</td>
+              <td class="r num" style="color:var(--rust)">−1.28%p</td><td>과거평균 가중치 하향</td></tr>
+            <tr><td class="mono">2025Q4</td><td class="r num">4.88%</td><td class="r num">4.41%</td>
+              <td class="r num">−0.47%p</td><td>변경 없음</td></tr>
+            <tr><td class="mono">2026Q1</td><td class="r num">4.62%</td><td class="r num">5.03%</td>
+              <td class="r num">+0.41%p</td><td>변경 없음</td></tr>
+            <tr><td class="mono">2026Q2</td><td class="r num">4.71%</td><td class="r num">4.55%</td>
+              <td class="r num">−0.16%p</td><td>대체투자 확신도 상한 도입</td></tr>
+          </tbody></table>
+          <div class="note"><b>수정 내역</b> 자산군 에이전트 프롬프트에서 과거평균 추정치 가중치를
+            0.33 → 0.18로 하향. 4개 분기 연속 상방 편향에 따른 조치입니다.</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 ─────────────── -->
+<section class="screen" id="s2">
+  <div class="head"><h2>투자정책서(IPS) <span class="due m">중간발표</span></h2>
+    <p>사람 운용역을 규율하던 문서가 그대로 에이전트의 제약이 됩니다. 각 조항은 기계 검증 가능한
+       규칙으로 번역되며, 모든 산출물이 이 규칙을 통과해야 결합 대상에 포함됩니다.</p></div>
+  <div class="contract">
+    <div><h4>입력</h4><ul>
+      <li><i>▸</i><span class="mono">ips_document.md</span> — 이사회 승인 원문</li>
+      <li><i>▸</i><span class="mono">approval_meta</span> — 버전, 승인일, 차기 검토일</li></ul></div>
+    <div><h4>출력</h4><ul>
+      <li><i>▸</i><span class="mono">constraints[]</span> — 조항 ID, 검증식, 심각도</li>
+      <li><i>▸</i><span class="mono">bands{asset:[lo,hi]}</span> — 자산군 허용범위</li>
+      <li><i>▸</i><span class="mono">objective</span> — 목적함수 정의</li></ul></div>
+  </div>
+  <div class="panel"><h3>조항 → 검증 규칙 번역</h3><div class="pad"><table>
+    <thead><tr><th style="width:64px">조항</th><th style="width:34%">원문</th><th>검증 규칙</th>
+      <th style="width:60px">심각도</th><th style="width:70px">상태</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">§3-1</td><td>기금의 장기 목표수익률은 소비자물가상승률에 실질경제성장률을 더한 수준으로 한다.</td>
+        <td class="mono">target ≥ cpi + gdp_real_5y</td><td><span class="tag n">경고</span></td><td><span class="tag ok">통과</span></td></tr>
+      <tr><td class="mono">§4-2</td><td>각 자산군 비중은 전략적 배분 기준비중 대비 허용범위 이내를 유지한다.</td>
+        <td class="mono">lo[a] ≤ w[a] ≤ hi[a] ∀a</td><td><span class="tag bad">반려</span></td><td><span class="tag bad">위반 1</span></td></tr>
+      <tr><td class="mono">§4-5</td><td>주식성 자산의 합계 비중은 55%를 초과할 수 없다.</td>
+        <td class="mono">Σ w[EQUITY] ≤ 0.55</td><td><span class="tag bad">반려</span></td><td><span class="tag ok">통과</span></td></tr>
+      <tr><td class="mono">§5-1</td><td>연간 급여지출을 충당할 유동성 자산을 상시 보유한다.</td>
+        <td class="mono">liquid_ratio ≥ liq_floor</td><td><span class="tag bad">반려</span></td><td><span class="tag ok">통과</span></td></tr>
+      <tr><td class="mono">§6-3</td><td>투기적 목적의 파생상품 거래를 금지한다.</td>
+        <td class="mono">derivative_intent = 'hedge'</td><td><span class="tag bad">반려</span></td><td><span class="tag ok">통과</span></td></tr>
+      <tr><td class="mono">§7-2</td><td>연금 지급의무의 듀레이션을 고려하여 자산 듀레이션을 관리한다.</td>
+        <td class="mono">|dur_a − dur_l| ≤ 3.0</td><td><span class="tag warn">검토</span></td><td><span class="tag warn">미구현</span></td></tr>
+      <tr><td class="mono">§9-1</td><td>모든 배분 결정의 근거를 문서화하고 이사회에 보고한다.</td>
+        <td class="mono">audit_trail.complete</td><td><span class="tag bad">반려</span></td><td><span class="tag ok">통과</span></td></tr>
+    </tbody></table></div></div>
+  <div class="note bad"><b>§4-2 위반 · 계층적 리스크 패리티(HRP)</b>
+    단기자금 비중 11.5%가 허용범위 상한 8.0%를 초과했습니다. 클리핑 후 재정규화 과정에서 상한을
+    다시 벗어난 것으로, 반복 투영 방식으로 수정이 필요합니다. 해당 후보는 투표와 결합에서 제외됐습니다.</div>
+  <div class="note"><b>§7-2 미구현 · 팀 결정 필요</b>
+    목적함수가 자산 수익률 기준이라 연금 지급의무의 현재가치 변동이 최적화에 반영되지 않습니다.
+    LDI 관점을 범위에 포함할지 결정해야 합니다.</div>
+  <div class="panel"><h3>자산군 허용범위</h3><div class="pad"><table id="t-bands"></table></div></div>
+</section>
+
+<!-- 3 ─────────────── -->
+<section class="screen" id="s3">
+  <div class="head"><h2>매크로 에이전트 <span class="due m">중간발표</span></h2>
+    <p>경기 국면을 분류하여 후속 자산군 에이전트에 공통 전제를 제공합니다. 국면 판단이 틀리면
+       14개 자산군 추정이 모두 같은 방향으로 틀립니다.</p></div>
+  <div class="contract">
+    <div><h4>입력</h4><ul>
+      <li><i>▸</i><span class="mono">macro_series[]</span> — 12개 지표 시계열</li>
+      <li><i>▸</i><span class="mono">as_of_date</span> — 기준일 (이후 데이터 차단)</li></ul></div>
+    <div><h4>출력</h4><ul>
+      <li><i>▸</i><span class="mono">regime</span> — 확장 / 후기 / 침체 / 회복</li>
+      <li><i>▸</i><span class="mono">regime_probs{}</span> — 4개 국면 확률</li>
+      <li><i>▸</i><span class="mono">confidence</span> · <span class="mono">rationale</span></li></ul></div>
+  </div>
+  <div class="grid2">
+    <div class="panel"><h3>판단 근거 지표</h3><div class="pad"><table>
+      <thead><tr><th>지표</th><th class="r">현재</th><th class="r">과거 평균</th><th>시사점</th></tr></thead>
+      <tbody>
+        <tr><td>장단기 금리차 (10Y−2Y)</td><td class="r num">+0.24%p</td><td class="r num">+0.91%p</td><td>후기 순환</td></tr>
+        <tr><td>제조업 PMI</td><td class="r num">49.6</td><td class="r num">52.1</td><td>수축 진입</td></tr>
+        <tr><td>실업률 갭</td><td class="r num">−0.4%p</td><td class="r num">0.0%p</td><td>노동시장 과열</td></tr>
+        <tr><td>신용스프레드 (IG)</td><td class="r num">1.18%p</td><td class="r num">1.34%p</td><td>확장 잔존</td></tr>
+        <tr><td>근원 CPI</td><td class="r num">2.6%</td><td class="r num">2.2%</td><td>목표 상회</td></tr>
+        <tr><td>실질 정책금리</td><td class="r num">+1.1%p</td><td class="r num">+0.3%p</td><td>긴축적</td></tr>
+      </tbody></table></div></div>
+    <div>
+      <div class="panel"><h3>국면 확률분포 <small>확신도 0.62</small></h3><div class="pad"><table><tbody>
+        <tr><td style="width:74px">확장</td><td><div class="bar"><i style="width:14%"></i></div></td><td class="r num" style="width:44px">14%</td></tr>
+        <tr class="hl"><td><b>후기 순환</b></td><td><div class="bar"><i style="width:58%"></i></div></td><td class="r num"><b>58%</b></td></tr>
+        <tr><td>침체</td><td><div class="bar"><i style="width:21%"></i></div></td><td class="r num">21%</td></tr>
+        <tr><td>회복</td><td><div class="bar"><i style="width:7%"></i></div></td><td class="r num">7%</td></tr>
+      </tbody></table></div></div>
+      <div class="panel"><h3>에이전트 서술</h3><div class="pad" style="font-size:12.5px;line-height:1.75;color:#31424B">
+        장단기 금리차가 역전 직전 수준까지 축소되고 제조업 PMI가 기준선을 하회한 반면, 신용스프레드는
+        여전히 낮고 노동시장은 타이트합니다. 실물 지표는 둔화를 가리키나 금융 여건은 아직 경색되지
+        않은 상태로, 후기 순환 국면으로 판단합니다. 침체 확률 21%는 PMI 하회가 2개월 연속이라는
+        점을 반영한 것입니다.</div></div>
+    </div>
+  </div>
+  <div class="note"><b>검증 대상</b> LLM은 특정 시점의 사후 국면 분류를 이미 학습했을 가능성이 높습니다.
+    화면 11의 날짜 마스킹 테스트가 이 단계에도 적용됩니다.</div>
+</section>
+
+<!-- 4 ─────────────── -->
+<section class="screen" id="s4">
+  <div class="head"><h2>자산군 에이전트 · 자본시장 가정 <span class="due m">중간발표</span></h2>
+    <p>자산군별 에이전트가 병렬로 세 가지 방법론으로 기대수익률을 추정한 뒤, 판정 에이전트가
+       최종값과 확신도를 결정합니다. 확신도는 Black-Litterman의 입력으로 사용됩니다.</p></div>
+  <div class="contract">
+    <div><h4>입력</h4><ul>
+      <li><i>▸</i><span class="mono">regime</span> — 매크로 에이전트 출력</li>
+      <li><i>▸</i><span class="mono">valuation{}</span> — CAPE, 배당수익률, 자사주</li>
+      <li><i>▸</i><span class="mono">growth{}</span> — 실질성장, 인플레 전망</li></ul></div>
+    <div><h4>출력</h4><ul>
+      <li><i>▸</i><span class="mono">mu[asset]</span> · <span class="mono">sigma[asset]</span></li>
+      <li><i>▸</i><span class="mono">confidence[asset]</span> — BL 입력값</li>
+      <li><i>▸</i><span class="mono">method_votes[]</span> — 방법론별 원값 보존</li></ul></div>
+  </div>
+  <div class="panel"><h3>방법론별 추정치와 판정 결과 <small>단위 %</small></h3>
+    <div class="pad"><table id="t-cma"></table></div></div>
+  <div class="note"><b>과거평균의 상방 편향</b> 14개 자산군 중 <b id="hb">—</b>개에서 과거평균이 최종
+    채택값보다 높습니다. 많이 오른 자산일수록 이미 비싸졌다는 점이 반영되지 않기 때문입니다.</div>
+  <div class="panel"><h3>판정 에이전트 서술 <small>사모주식(PE) 사례</small></h3><div class="pad">
+    <pre>세 방법론의 결과가 7.16% ~ 9.96%로 크게 갈렸습니다.
+
+과거평균 9.96%는 최근 10년 저금리 국면의 밸류에이션 확대 효과를
+포함하고 있어 그대로 채택하기 어렵습니다. CAPE 기반 7.16%는
+공개시장 배수를 준용한 것이라 사모 특유의 유동성 프리미엄이
+반영되지 않았습니다.
+
+Grinold-Kroner 분해 7.85%를 기준으로 하되, 후기 순환 국면에서
+사모주식의 실현 배수가 하락하는 경향을 반영해 8.2%로 제시합니다.
+
+확신도는 0.53으로 둡니다. 방법론 간 편차가 2.8%p로 크고,
+사모주식은 평가가격 기반이라 관측 자체의 신뢰도가 낮습니다.</pre>
+    <div class="note bad" style="margin-bottom:0"><b>검증 대상</b> 서술은 절차적으로 타당해 보이지만,
+      모델이 해당 기간의 실현 수익률을 이미 알고 있었을 가능성을 배제할 수 없습니다.</div></div></div>
+</section>
+
+<!-- 5 ─────────────── -->
+<section class="screen" id="s5">
+  <div class="head"><h2>공분산 에이전트 <span class="due m">중간발표</span></h2>
+    <p>추정할 파라미터가 105개인데 월간 관측치는 60개뿐입니다. Ledoit-Wolf 축소로 극단적
+       상관계수를 안쪽으로 당겨 최적화의 불안정을 완화합니다.</p></div>
+  <div class="contract">
+    <div><h4>입력</h4><ul>
+      <li><i>▸</i><span class="mono">returns[T×N]</span> — 월간 수익률 60×14</li>
+      <li><i>▸</i><span class="mono">sigma[asset]</span> — 자산군 에이전트 출력</li></ul></div>
+    <div><h4>출력</h4><ul>
+      <li><i>▸</i><span class="mono">cov[N×N]</span> — 축소 적용 공분산</li>
+      <li><i>▸</i><span class="mono">alpha</span> · <span class="mono">cond_number</span></li></ul></div>
+  </div>
+  <div class="grid3" style="margin-bottom:18px">
+    <div class="kpi"><div class="l">추정 파라미터 / 관측치</div><div class="v num">105 / 60</div>
+      <div class="s">미지수가 관측보다 많음</div></div>
+    <div class="kpi"><div class="l">축소 강도 α</div><div class="v num">0.31</div>
+      <div class="s">타깃: 상수상관 0.327</div></div>
+    <div class="kpi"><div class="l">최대 상관계수</div><div class="v num">0.88 → 0.71</div>
+      <div class="s">국내주식 ↔ 해외주식(선진)</div></div>
+  </div>
+  <div class="panel"><h3>상관행렬 <small>축소 전후 비교</small></h3><div class="pad">
+    <div style="margin-bottom:12px">
+      <span class="chip on" data-cm="corr_sample">표본 상관행렬</span>
+      <span class="chip" data-cm="corr_shrunk">축소 적용 후</span></div>
+    <div id="heat"></div>
+    <div style="margin-top:10px;font-size:11.5px;color:var(--mute)">
+      진할수록 상관이 높습니다. 축소 후에는 양 끝의 극단값이 평균 쪽으로 당겨집니다.</div></div></div>
+  <div class="note ok"><b>왜 필요한가</b> 국내주식과 해외주식(선진)의 표본 상관이 0.88입니다.
+    역행렬을 계산하면 두 자산의 고유 변동분이 12%뿐이라 작은 추정오차가 8배 이상 증폭되어
+    극단적 롱숏으로 나타납니다.</div>
+</section>
+
+<!-- 6 ─────────────── -->
+<section class="screen" id="s6">
+  <div class="head"><h2>포트폴리오 구축 <span class="due m">중간발표</span></h2>
+    <p>22개 방법론 에이전트가 동일한 CMA와 공분산을 입력받아 각자 포트폴리오를 구성합니다.
+       어느 방법이 옳은지 사전에 알 수 없으므로 모두 생성한 뒤 비교합니다.</p></div>
+  <div class="contract">
+    <div><h4>입력</h4><ul>
+      <li><i>▸</i><span class="mono">mu[N]</span> · <span class="mono">cov[N×N]</span></li>
+      <li><i>▸</i><span class="mono">confidence[N]</span> — BL 계열에만</li>
+      <li><i>▸</i><span class="mono">bands{}</span> — IPS 제약</li></ul></div>
+    <div><h4>출력</h4><ul>
+      <li><i>▸</i><span class="mono">weights[method][N]</span></li>
+      <li><i>▸</i><span class="mono">risk_contrib[method][N]</span></li>
+      <li><i>▸</i><span class="mono">ips_check[method]</span> — 통과 / 반려</li></ul></div>
+  </div>
+  <div class="panel"><h3>방법론별 결과 <small>IPS 통과 7개</small></h3><div class="pad">
+    <div style="margin-bottom:12px">
+      <span class="chip on" data-view="w">금액 비중</span>
+      <span class="chip" data-view="rc">위험 기여도</span></div>
+    <table id="t-port"></table></div></div>
+  <div class="note"><b>금액과 위험은 다릅니다</b> 위험 기여도로 전환하면 Black-Litterman은
+    해외주식(선진)에 금액 기준 20.0%를 배분했으나 위험 기여도는 43.3%입니다. 사실상 그 자산 하나가
+    변동의 절반 가까이를 만듭니다.</div>
+  <div class="grid2">
+    <div class="panel"><h3>제약을 제거하면 <small>평균-분산 · IPS 밴드 미적용</small></h3><div class="pad">
+      <table id="t-unc"></table>
+      <div class="note bad" style="margin-bottom:0"><b>오차 극대화기</b> IPS 밴드를 걷어내면 단기자금
+        +237%, 국내채권(크레딧) −72%처럼 실행 불가능한 해가 나옵니다. 상관이 높은 자산 쌍의 미세한
+        기대수익률 차이를 확정된 신호로 받아들인 결과입니다.</div></div></div>
+    <div class="panel"><h3>실행된 22개 방법론</h3><div class="pad" style="font-size:12.5px;line-height:1.9;color:#31424B">
+      평균-분산 · Black-Litterman · 리스크 패리티 · 계층적 리스크 패리티 · 최소분산 · 최대분산화 ·
+      동일가중 · 시가총액가중 · 역변동성 · 로버스트 평균-분산 · 리샘플링 효율적경계 · CVaR 최소화 ·
+      최대 다양화비율 · 엔트로피 최대화 · 목표변동성 · 리스크버짓 · BL(확신도 균등) · BL(역변동성 사전) ·
+      축소 미적용 평균-분산 · HRP(워드연결) · HRP(완전연결) ·
+      <span style="color:var(--jade);font-weight:600">신규 제안 1건</span>
+      <div class="note ok" style="margin-bottom:0"><b>리서처 에이전트 제안</b>
+        Nested Clustered Optimization(NCO) — HRP의 군집 구조와 평균-분산의 최적성을 결합하는 방식이
+        미구현 상태입니다. 다음 실행 반영을 권고합니다.</div></div></div>
+  </div>
+</section>
+
+<!-- 7 ─────────────── -->
+<section class="screen" id="s7">
+  <div class="head"><h2>상호 검토 · 순위 투표 <span class="due m">중간발표</span></h2>
+    <p>21개 에이전트가 서로의 결과를 비판한 뒤 전 후보에 순위를 부여합니다. 1위표만 세는 다수결과
+       달리, 순위 투표는 고르게 높은 평가를 받은 후보를 가려냅니다.</p></div>
+  <div class="contract">
+    <div><h4>입력</h4><ul>
+      <li><i>▸</i><span class="mono">weights[method][N]</span> — 유효 후보</li>
+      <li><i>▸</i><span class="mono">ips_check[method]</span></li></ul></div>
+    <div><h4>출력</h4><ul>
+      <li><i>▸</i><span class="mono">critiques[]</span> — 비판자, 대상, 내용</li>
+      <li><i>▸</i><span class="mono">borda[method]</span> — 순위 점수</li>
+      <li><i>▸</i><span class="mono">avg_rank[method]</span> · <span class="mono">firsts[method]</span></li></ul></div>
+  </div>
+  <div class="panel"><h3>순위 투표 집계 <small>21개 에이전트 · 1위 6점 ~ 7위 0점</small></h3>
+    <div class="pad"><table id="t-vote"></table></div></div>
+  <div class="note b" id="vote-note"><b>단순 다수결이었다면 순위가 뒤집혔습니다</b></div>
+  <div class="panel"><h3>상호 비판 기록 <small>주요 5건</small></h3><div class="pad">
+    <div class="crit"><div class="who">리스크 패리티 <span>→ 평균-분산</span></div>
+      <p>국내채권(크레딧) 12.0%는 밴드 상한에 정확히 붙어 있습니다. 최적해가 제약에 걸렸다는 것은
+        제약이 없었다면 더 극단으로 갔다는 뜻이며, 해당 추정치의 신뢰도를 먼저 점검해야 합니다.</p></div>
+    <div class="crit"><div class="who">최소분산 <span>→ 계층적 리스크 패리티</span></div>
+      <p>단기자금 11.5%가 IPS 상한을 초과합니다. 클리핑 후 재정규화 순서 문제로 보이며,
+        반복 투영 방식으로 수정해야 합니다.</p></div>
+    <div class="crit"><div class="who">Black-Litterman <span>→ 동일가중</span></div>
+      <p>동일가중은 추정오차에 강건하나, 14개 자산군의 변동성이 0.9%에서 21.0%까지 23배 차이 납니다.
+        금액 균등은 위험 균등과 무관하며 이 경우 사모주식이 위험의 대부분을 차지합니다.</p></div>
+    <div class="crit"><div class="who">로버스트 평균-분산 <span>→ Black-Litterman</span></div>
+      <p>신흥주식 견해의 확신도 0.35는 자산군 에이전트가 스스로 매긴 값입니다. 과거 실현치로
+        보정된 적이 없다면 사전분포 이탈 폭을 정당화할 근거가 부족합니다.</p></div>
+    <div class="crit"><div class="who">CVaR 최소화 <span>→ 전체</span></div>
+      <p>모든 후보가 정규분포를 가정한 분산 기준으로 평가되고 있습니다. 대체투자 비중이 20%를 넘는
+        포트폴리오에서 꼬리위험이 과소평가될 수 있습니다.</p></div></div></div>
+  <div class="note"><b>팀 논의 사항 · 투표의 독립성</b> 21개 에이전트가 동일한 기반 모델을 사용하면
+    판단이 상관됩니다. 순위 투표는 집계 방식을 개선할 뿐 판단의 독립성 문제를 해결하지 못합니다.
+    에이전트별로 다른 모델을 쓰거나 의도적으로 반대 입장을 부여하는 설계가 필요한지 결정해야 합니다.</div>
+</section>
+
+<!-- 8 ─────────────── -->
+<section class="screen" id="s8">
+  <div class="head"><h2>위험관리 에이전트 <span class="due f">최종발표</span></h2>
+    <p>투표 결과와 독립적으로 각 후보의 위험을 심사합니다. 득표가 높아도 위험 심사를 통과하지
+       못하면 결합 가중치가 축소되거나 제외됩니다.</p></div>
+  <div class="contract">
+    <div><h4>입력</h4><ul>
+      <li><i>▸</i><span class="mono">weights[method][N]</span></li>
+      <li><i>▸</i><span class="mono">scenarios[]</span> — 스트레스 시나리오 정의</li>
+      <li><i>▸</i><span class="mono">liq_floor</span> — 연간 급여지출 소요</li></ul></div>
+    <div><h4>출력</h4><ul>
+      <li><i>▸</i><span class="mono">stress[method][scenario]</span></li>
+      <li><i>▸</i><span class="mono">concentration</span> · <span class="mono">liquidity</span> · <span class="mono">cvar95</span></li>
+      <li><i>▸</i><span class="mono">verdict[method]</span> — 승인 / 조건부 / 반려</li></ul></div>
+  </div>
+  <div class="panel"><h3>스트레스 시나리오 <small>포트폴리오 손익 · %</small></h3>
+    <div class="pad"><table id="t-stress"></table></div></div>
+  <div class="panel"><h3>위험 지표 심사</h3><div class="pad"><table id="t-risk"></table></div></div>
+  <div class="note"><b>동일가중 · 조건부 판정</b> 스트레스 손실 자체는 중간 수준이나 상위 3개 자산의
+    위험 기여도가 80%를 넘습니다. 금액 균등이 위험 집중을 낳는 전형적 사례로, 결합 가중치를
+    절반으로 축소했습니다.</div>
+  <div class="panel"><h3>결합 포트폴리오 최종 심사</h3><div class="pad">
+    <div class="grid4" id="k-risk"></div>
+    <div class="note ok" style="margin-bottom:0"><b>승인</b> 개별 후보 대비 스트레스 손실이 완화되고
+      상위 3개 집중도가 낮아졌습니다. 서로 다른 방법론을 섞으면서 특정 위험원에 대한 노출이
+      분산된 결과입니다.</div></div></div>
+</section>
+
+<!-- 9 ─────────────── -->
+<section class="screen" id="s9">
+  <div class="head"><h2>CIO 결합 · 이사회 보고 <span class="due f">최종발표</span></h2>
+    <p>순위 투표 점수와 위험 심사 판정을 곱해 결합 가중치를 산출하고, 7개 포트폴리오를 결합합니다.
+       설명책임을 위해 최종 비중을 방법론별 기여로 분해합니다.</p></div>
+  <div class="contract">
+    <div><h4>입력</h4><ul>
+      <li><i>▸</i><span class="mono">borda[method]</span> — 순위 투표 점수</li>
+      <li><i>▸</i><span class="mono">verdict[method]</span> — 위험 심사 판정</li>
+      <li><i>▸</i><span class="mono">weights[method][N]</span></li></ul></div>
+    <div><h4>출력</h4><ul>
+      <li><i>▸</i><span class="mono">combine_w[method]</span> — 결합 가중치</li>
+      <li><i>▸</i><span class="mono">final_weights[N]</span></li>
+      <li><i>▸</i><span class="mono">attribution[method][N]</span> — 기여 분해</li>
+      <li><i>▸</i><span class="mono">board_memo.md</span></li></ul></div>
+  </div>
+  <div class="panel"><h3>결합 가중치 산출</h3><div class="pad">
+    <pre>결합가중[m] = 보르다점수[m] × 위험계수[m] / Σ(전체)
+             위험계수 = 승인 1.0 · 조건부 0.5 · 반려 0.0</pre>
+    <table id="t-cw" style="margin-top:12px"></table></div></div>
+  <div class="panel"><h3>최종 비중과 방법론별 기여 분해 <small>설명책임 요건 대응</small></h3>
+    <div class="pad">
+      <div class="lg" id="lg-contrib"></div>
+      <table id="t-attr"></table>
+      <div class="note ok" style="margin-bottom:0"><b>결합해도 설명이 가능한 이유</b>
+        각 자산군의 최종 비중을 방법론별 기여로 분해하면 "국내채권을 왜 이만큼 담았는가"에 대해
+        어느 모델이 얼마나 밀었는지로 답할 수 있습니다. 결합 방식의 설명책임 약점을 보완하는 장치입니다.</div></div></div>
+  <div class="memo">
+    <h4>2026년 3분기 전략적 자산배분 재검토 결과</h4>
+    <div class="meta">기금운용본부 · 2026년 9월 9일 · 투자정책서 v4.2 기준 · 자동 생성 초안</div>
+    <h5>1. 결론</h5>
+    <p>2026년 3분기 전략적 자산배분은 7개 방법론을 가중 결합한 배분안을 채택할 것을 제안합니다.
+       기대수익률 4.74%, 기대변동성 6.68% 수준이며, 투자정책서상 모든 자산군 허용범위를 충족합니다.</p>
+    <h5>2. 결합 방식을 채택한 이유</h5>
+    <p>단일 방법론을 선택하는 방식과 비교 검토한 결과, 결합 방식을 채택했습니다. 방법론 간
+       추정 전제가 서로 다르고 어느 쪽이 옳은지 사전에 판별할 수 없는 상황에서, 하나를 선택하면
+       그 방법론의 고유한 오류에 배분 전체가 노출됩니다. 위험 심사 결과 결합 포트폴리오의
+       스트레스 손실과 자산 집중도가 개별 후보 대비 모두 개선된 것도 이를 뒷받침합니다.</p>
+    <p>결합 방식의 약점으로 지적되는 설명책임 문제는 방법론별 기여 분해로 보완했습니다. 각 자산군
+       비중이 어느 방법론에서 얼마씩 나왔는지 추적할 수 있으며, 해당 내역을 별첨합니다.</p>
+    <h5>3. 시장 균형 대비 주요 이탈</h5>
+    <p>국내채권(국고)을 시장 균형 22.3% 대비 25.2%로 확대했습니다. 후기 순환 국면 판단이
+       Black-Litterman과 최소분산 양쪽에서 공통으로 반영된 결과입니다. 반대로 사모주식은 5.0%에서
+       2.4%로 축소했습니다. 기대수익률 자체는 8.2%로 가장 높으나 방법론 간 추정 편차가 2.8%p로 커
+       확신도가 0.53에 머물렀고, 위험 심사에서도 유동성 제약이 지적되었습니다.</p>
+    <h5>4. 이사회 판단이 필요한 사항</h5>
+    <p>첫째, 투자정책서 제7조 제2항의 부채 듀레이션 관리 조항이 파이프라인에 반영되어 있지 않습니다.
+       목적함수가 자산 수익률 기준으로 설정되어 있어 연금 지급의무의 현재가치 변동이 최적화에
+       들어가지 않습니다.</p>
+    <p>둘째, <b>본 배분안의 백테스트 성과는 신뢰할 수 없습니다.</b> 검증 절차에서 모델 학습 시점
+       이전 구간의 초과성과가 학습 데이터 누출에 기인한 것으로 확인되었습니다. 학습 시점 이후
+       구간에서는 단순 고정 배분 대비 우위가 관측되지 않았습니다. 상세는 별첨 검증 보고서를
+       참조하시기 바랍니다.</p>
+    <h5>5. 첨부</h5>
+    <p>자본시장 가정 산출 내역, 방법론별 포트폴리오 비교표, 순위 투표 집계, 위험 심사 결과,
+       기여 분해 내역, 백테스트 및 검증 보고서.</p>
+  </div>
+</section>
+
+<!-- 10 ─────────────── -->
+<section class="screen" id="s10">
+  <div class="head"><h2>백테스트 검증 <span class="due f">최종발표</span></h2>
+    <p>제안서 연구내용 1번의 실증 화면입니다. 결합 방식이 단일 방법론 대비 개선을 만드는지
+       확인하되, 모델 학습 시점을 기준으로 구간을 나누어 결과의 신뢰성을 함께 검증합니다.</p></div>
+  <div class="contract">
+    <div><h4>입력</h4><ul>
+      <li><i>▸</i><span class="mono">returns[T×N]</span> — 2016-01 ~ 2026-08</li>
+      <li><i>▸</i><span class="mono">final_weights[N]</span> · 벤치마크 4종</li>
+      <li><i>▸</i><span class="mono">model_cutoff</span> — 2024-06</li></ul></div>
+    <div><h4>출력</h4><ul>
+      <li><i>▸</i><span class="mono">nav[strategy][T]</span></li>
+      <li><i>▸</i><span class="mono">metrics[strategy][segment]</span></li>
+      <li><i>▸</i><span class="mono">leakage_gap</span> — 구간 간 성과 차이</li></ul></div>
+  </div>
+  <div class="panel"><h3>누적 수익 곡선 <small>2016-01 = 100 · 세로선은 모델 학습 종료 시점</small></h3>
+    <div class="pad"><div class="lg" id="lg-bt"></div><div id="bt-chart"></div></div></div>
+  <div class="grid2">
+    <div class="panel"><h3>학습 컷오프 이전 <small>2016-01 ~ 2024-06 · 102개월</small></h3>
+      <div class="pad"><table id="t-pre"></table></div></div>
+    <div class="panel"><h3>학습 컷오프 이후 <small>2024-07 ~ 2026-08 · 26개월</small></h3>
+      <div class="pad"><table id="t-post"></table></div></div>
+  </div>
+  <div class="note bad"><b>결론 · 초과성과는 학습 누출에 기인합니다</b>
+    컷오프 이전 구간에서 결합 전략은 BL 고정 대비 연 <b id="g1">—</b>%p 초과했으나, 이후 구간에서는
+    <b id="g2">—</b>%p로 축소되었고 <b>리스크 패리티 고정 배분에는 오히려 뒤졌습니다.</b>
+    에이전트가 만든 자본시장 가정이 해당 기간의 실현 수익률을 이미 알고 있었을 때만 우위가
+    나타난다는 뜻입니다.</div>
+  <div class="note"><b>한계 · 사후 구간이 짧습니다</b>
+    컷오프 이후 표본이 26개월에 불과해 통계적 유의성을 주장하기 어렵습니다. 최종 보고서에서는
+    이 점을 명시하고, 우위가 있다는 주장 대신 <b>누출이 없을 때 우위가 관측되지 않았다</b>는
+    형태로 서술하는 것이 정확합니다.</div>
+</section>
+
+<!-- 11 ─────────────── -->
+<section class="screen" id="s11">
+  <div class="head"><h2>룩어헤드 · 보정 검증 <span class="due f">최종발표</span></h2>
+    <p>에이전트가 산출한 값이 실제 추론의 결과인지, 학습 과정에서 이미 알고 있던 결과를 절차로
+       포장한 것인지 검증합니다. 백테스트 결과의 해석은 이 화면에 달려 있습니다.</p></div>
+  <div class="contract">
+    <div><h4>입력</h4><ul>
+      <li><i>▸</i><span class="mono">agent_outputs[]</span> — 전 단계 산출물</li>
+      <li><i>▸</i><span class="mono">as_of_date</span> · <span class="mono">model_cutoff</span></li>
+      <li><i>▸</i><span class="mono">control_runs[]</span> — 마스킹·대조군 결과</li></ul></div>
+    <div><h4>출력</h4><ul>
+      <li><i>▸</i><span class="mono">leakage_flags[]</span> — 단계별 신호등</li>
+      <li><i>▸</i><span class="mono">calibration_curve</span></li>
+      <li><i>▸</i><span class="mono">gate</span> — 통과 / 조건부 / 반려</li></ul></div>
+  </div>
+  <div class="note bad"><b>종합 판정 · 조건부</b> 파이프라인 산출물 자체는 유효하나, 백테스트 성과를
+    모델 성능의 근거로 제시할 수 없습니다.</div>
+  <div class="grid2">
+    <div class="panel"><h3>룩어헤드 감사 <small>3개 테스트 · 단계별</small></h3><div class="pad">
+      <table><thead><tr><th>단계</th><th>컷오프</th><th>날짜 마스킹</th><th>대조군</th></tr></thead><tbody>
+        <tr><td>매크로 국면 분류</td><td><span class="tag bad">위반</span></td><td><span class="tag warn">불안정</span></td><td><span class="tag bad">위반</span></td></tr>
+        <tr><td>CMA · 주식군</td><td><span class="tag bad">위반</span></td><td><span class="tag warn">불안정</span></td><td><span class="tag warn">불안정</span></td></tr>
+        <tr><td>CMA · 채권군</td><td><span class="tag bad">위반</span></td><td><span class="tag ok">통과</span></td><td><span class="tag ok">통과</span></td></tr>
+        <tr><td>CMA · 대체투자</td><td><span class="tag bad">위반</span></td><td><span class="tag ok">통과</span></td><td><span class="tag ok">통과</span></td></tr>
+        <tr><td>공분산 추정</td><td><span class="tag ok">통과</span></td><td><span class="tag ok">통과</span></td><td><span class="tag ok">통과</span></td></tr>
+        <tr><td>포트폴리오 구축</td><td><span class="tag ok">통과</span></td><td><span class="tag ok">통과</span></td><td><span class="tag ok">통과</span></td></tr>
+      </tbody></table>
+      <div style="margin-top:14px">
+        <div class="sig"><span class="dot bad d"></span><div><div class="t">컷오프 테스트</div>
+          <div class="b">평가 구간의 80%가 모델 학습 시점 이전입니다. 해당 기간의 실현 수익률이
+            가중치에 포함되어 있을 수 있습니다.</div></div></div>
+        <div class="sig"><span class="dot warn d"></span><div><div class="t">날짜 마스킹 테스트</div>
+          <div class="b">기준일과 고유명사를 제거하고 수치만 제공했을 때 주식군 추정치가 원본 대비
+            평균 1.4%p 변동했습니다. 채권·대체는 0.3%p 이내로 안정적입니다.</div></div></div>
+        <div class="sig"><span class="dot bad d"></span><div><div class="t">대조군 테스트</div>
+          <div class="b">동일 통계 패턴에 가상 날짜를 부여한 대조군에서 국면 분류가 달라졌습니다.
+            지표가 아니라 시점 자체가 판단에 영향을 준 증거입니다.</div></div></div>
+      </div></div></div>
+    <div>
+      <div class="panel"><h3>확신도 보정 <small>에이전트 자기평가 vs 실제 적중률</small></h3>
+        <div class="pad"><div id="calib"></div>
+          <div style="margin-top:8px;font-size:11.5px;color:var(--mute);line-height:1.6">
+            대각선은 완전 보정 상태입니다. 곡선이 아래에 있으면 과신 — 에이전트가 말한 확신도보다
+            실제 적중률이 낮다는 뜻입니다.</div></div></div>
+      <div class="note bad"><b>과신 확인</b> 확신도 0.8 구간의 실제 적중률은 0.58입니다. 이 값은
+        Black-Litterman에서 시장 균형으로부터의 이탈 폭을 직접 결정하므로, 보정 없이 사용하면
+        확신이 없는 견해에 근거해 배분을 과도하게 기울이게 됩니다.</div>
+      <div class="note b"><b>결합 방식에서 더 중요한 이유</b> BL은 결합 가중치 <b id="blw">—</b>%로
+        가장 큰 비중을 차지합니다. 확신도 과신이 BL 포트폴리오를 왜곡하면 그 왜곡이 결합
+        결과에도 가장 크게 전달됩니다.</div>
+    </div>
+  </div>
+  <div class="panel"><h3>완화 설계 제안 <small>구현 담당 배정 필요</small></h3><div class="pad"><table>
+    <thead><tr><th style="width:26%">방안</th><th>내용</th><th style="width:70px">난이도</th><th style="width:86px">효과</th></tr></thead>
+    <tbody>
+      <tr><td>컷오프 이후 구간 평가</td><td>모델 학습 종료 이후 기간만 평가 구간으로 사용. 표본이 짧아지는 대신 누출이 원천 차단됨</td><td><span class="tag n">낮음</span></td><td><span class="tag ok">근본 해결</span></td></tr>
+      <tr><td>날짜·고유명사 마스킹</td><td>프롬프트에서 기준일과 국가·기업명을 제거하고 수치 패턴만 제공</td><td><span class="tag n">낮음</span></td><td><span class="tag warn">부분 완화</span></td></tr>
+      <tr><td>합성 대조군</td><td>동일 통계 특성의 가상 시계열을 생성해 실제 데이터와 결과 비교</td><td><span class="tag warn">중간</span></td><td><span class="tag ok">진단 가능</span></td></tr>
+      <tr><td>확신도 사후 보정</td><td>과거 실행의 확신도-적중률 관계로 보정 함수를 학습해 적용</td><td><span class="tag warn">중간</span></td><td><span class="tag ok">직접 개선</span></td></tr>
+      <tr><td>편차 기반 확신도</td><td>자기평가 대신 방법론 간 추정 편차의 역수를 확신도로 사용</td><td><span class="tag n">낮음</span></td><td><span class="tag ok">의존성 제거</span></td></tr>
+    </tbody></table></div></div>
+</section>
+
+</main></div>
+
+<script>
+const D={"assets":[{"name":"국내주식","group":"주식","gk":6.17,"cape":5.26,"hist":8.45,"final":5.9,"vol":16.5,"conf":0.53,"lo":10.0,"hi":20.0,"mkt":14.1,"bl_mu":3.29},{"name":"해외주식(선진)","group":"주식","gk":6.4,"cape":6.96,"hist":6.81,"final":6.4,"vol":15.2,"conf":0.56,"lo":20.0,"hi":38.0,"mkt":27.7,"bl_mu":3.33},{"name":"해외주식(신흥)","group":"주식","gk":7.07,"cape":6.89,"hist":7.05,"final":7.1,"vol":19.8,"conf":0.44,"lo":3.0,"hi":10.0,"mkt":5.0,"bl_mu":3.86},{"name":"국내채권(국고)","group":"채권","gk":2.93,"cape":3.93,"hist":4.64,"final":3.2,"vol":4.1,"conf":0.61,"lo":15.0,"hi":32.0,"mkt":22.3,"bl_mu":0.38},{"name":"국내채권(크레딧)","group":"채권","gk":3.88,"cape":3.33,"hist":4.83,"final":3.9,"vol":5.0,"conf":0.62,"lo":3.0,"hi":12.0,"mkt":5.9,"bl_mu":0.44},{"name":"해외채권(선진)","group":"채권","gk":4.5,"cape":3.13,"hist":4.32,"final":3.6,"vol":6.2,"conf":0.51,"lo":2.0,"hi":10.0,"mkt":4.1,"bl_mu":0.53},{"name":"해외채권(신흥)","group":"채권","gk":5.55,"cape":5.08,"hist":6.78,"final":5.2,"vol":9.4,"conf":0.72,"lo":0.0,"hi":5.0,"mkt":1.8,"bl_mu":0.86},{"name":"국내부동산","group":"대체","gk":5.26,"cape":5.73,"hist":6.69,"final":5.4,"vol":10.8,"conf":0.43,"lo":2.0,"hi":9.0,"mkt":4.5,"bl_mu":1.63},{"name":"해외부동산","group":"대체","gk":5.61,"cape":5.84,"hist":6.96,"final":5.8,"vol":12.6,"conf":0.45,"lo":2.0,"hi":9.0,"mkt":4.1,"bl_mu":1.79},{"name":"사모주식(PE)","group":"대체","gk":7.85,"cape":7.16,"hist":9.96,"final":8.2,"vol":21.0,"conf":0.53,"lo":2.0,"hi":10.0,"mkt":5.0,"bl_mu":4.07},{"name":"인프라","group":"대체","gk":5.75,"cape":5.41,"hist":6.68,"final":5.6,"vol":11.2,"conf":0.54,"lo":1.0,"hi":7.0,"mkt":2.7,"bl_mu":1.67},{"name":"헤지펀드","group":"대체","gk":4.96,"cape":4.51,"hist":4.98,"final":4.8,"vol":7.6,"conf":0.45,"lo":0.0,"hi":6.0,"mkt":1.4,"bl_mu":1.09},{"name":"원자재","group":"대체","gk":2.82,"cape":2.84,"hist":3.84,"final":3.4,"vol":17.4,"conf":0.81,"lo":0.0,"hi":4.0,"mkt":0.5,"bl_mu":2.46},{"name":"단기자금","group":"현금","gk":2.79,"cape":1.91,"hist":2.88,"final":2.6,"vol":0.9,"conf":0.76,"lo":1.0,"hi":8.0,"mkt":0.9,"bl_mu":0.04}],"corr_sample":[[1.0,0.88,0.75,0.12,0.14,0.07,0.12,0.52,0.4,0.59,0.56,0.47,0.51,0.06],[0.88,1.0,0.76,0.11,0.03,0.15,0.12,0.54,0.41,0.63,0.53,0.49,0.65,0.02],[0.75,0.76,1.0,0.02,0.09,-0.04,0.19,0.49,0.47,0.6,0.4,0.56,0.38,-0.03],[0.12,0.11,0.02,1.0,0.54,0.72,0.74,0.2,0.28,0.21,0.26,0.17,0.1,0.05],[0.14,0.03,0.09,0.54,1.0,0.64,0.77,0.24,0.18,0.35,0.24,0.23,0.23,0.17],[0.07,0.15,-0.04,0.72,0.64,1.0,0.6,0.12,0.25,0.21,0.3,0.19,0.09,0.17],[0.12,0.12,0.19,0.74,0.77,0.6,1.0,0.34,0.19,0.16,0.14,0.15,0.2,0.1],[0.52,0.54,0.49,0.2,0.24,0.12,0.34,1.0,0.55,0.43,0.46,0.55,0.55,0.03],[0.4,0.41,0.47,0.28,0.18,0.25,0.19,0.55,1.0,0.47,0.5,0.44,0.33,0.09],[0.59,0.63,0.6,0.21,0.35,0.21,0.16,0.43,0.47,1.0,0.51,0.48,0.39,0.03],[0.56,0.53,0.4,0.26,0.24,0.3,0.14,0.46,0.5,0.51,1.0,0.41,0.43,0.13],[0.47,0.49,0.56,0.17,0.23,0.19,0.15,0.55,0.44,0.48,0.41,1.0,0.56,0.09],[0.51,0.65,0.38,0.1,0.23,0.09,0.2,0.55,0.33,0.39,0.43,0.56,1.0,0.08],[0.06,0.02,-0.03,0.05,0.17,0.17,0.1,0.03,0.09,0.03,0.13,0.09,0.08,1.0]],"corr_shrunk":[[1.0,0.71,0.62,0.18,0.2,0.15,0.19,0.46,0.37,0.51,0.49,0.43,0.45,0.14],[0.71,1.0,0.62,0.17,0.12,0.21,0.19,0.47,0.39,0.53,0.47,0.44,0.55,0.11],[0.62,0.62,1.0,0.11,0.16,0.07,0.24,0.44,0.42,0.51,0.38,0.49,0.36,0.08],[0.18,0.17,0.11,1.0,0.47,0.6,0.61,0.24,0.29,0.24,0.28,0.22,0.17,0.14],[0.2,0.12,0.16,0.47,1.0,0.54,0.63,0.27,0.23,0.34,0.26,0.26,0.26,0.22],[0.15,0.21,0.07,0.6,0.54,1.0,0.51,0.18,0.28,0.25,0.31,0.23,0.16,0.22],[0.19,0.19,0.24,0.61,0.63,0.51,1.0,0.33,0.23,0.21,0.2,0.2,0.24,0.17],[0.46,0.47,0.44,0.24,0.27,0.18,0.33,1.0,0.48,0.4,0.42,0.48,0.48,0.12],[0.37,0.39,0.42,0.29,0.23,0.28,0.23,0.48,1.0,0.43,0.45,0.4,0.33,0.16],[0.51,0.53,0.51,0.24,0.34,0.25,0.21,0.4,0.43,1.0,0.45,0.43,0.37,0.12],[0.49,0.47,0.38,0.28,0.26,0.31,0.2,0.42,0.45,0.45,1.0,0.38,0.4,0.19],[0.43,0.44,0.49,0.22,0.26,0.23,0.2,0.48,0.4,0.43,0.38,1.0,0.49,0.16],[0.45,0.55,0.36,0.17,0.26,0.16,0.24,0.48,0.33,0.37,0.4,0.49,1.0,0.16],[0.14,0.11,0.08,0.14,0.22,0.22,0.17,0.12,0.16,0.12,0.19,0.16,0.16,1.0]],"alpha":0.31,"rbar":0.327,"port":{"MV":[10.0,20.0,3.0,15.0,12.0,4.7,5.0,3.1,7.5,2.0,6.1,6.0,0.0,5.6],"BL":[10.0,20.0,3.0,32.0,12.0,6.3,0.0,2.0,2.0,2.0,1.0,1.7,0.0,8.0],"RP":[10.0,20.0,3.0,15.0,6.4,8.3,5.0,5.9,6.8,3.5,5.7,5.8,3.6,1.0],"HRP":[14.4,28.8,4.3,21.6,4.3,2.9,0.7,2.9,2.9,2.9,1.4,1.2,0.2,11.5],"MKT":[14.1,27.7,5.0,22.3,5.9,4.1,1.8,4.5,4.1,5.0,2.7,1.4,0.5,0.9],"MV_unc":[10.0,-39.0,11.0,72.0,-72.0,35.0,-61.0,-12.0,-17.0,-6.0,-32.0,-70.0,44.0,237.0]},"stats":{"MV":[5.0,7.07],"BL":[4.54,6.22],"RP":[5.12,7.74],"HRP":[5.0,8.14],"MKT":[5.3,8.73]},"rc":{"MV":[19.1,37.6,6.0,3.7,3.5,1.7,2.9,3.0,8.2,4.0,6.2,3.9,0.0,0.1],"BL":[21.9,43.3,6.6,10.3,4.0,2.7,0.0,2.0,2.2,4.5,1.1,1.2,0.0,0.2],"RP":[17.3,34.4,5.4,3.3,1.6,2.7,2.6,5.4,6.7,6.5,5.3,3.5,5.2,0.0],"HRP":[25.1,50.1,7.7,3.8,0.8,0.7,0.3,2.2,2.3,4.9,1.1,0.6,0.2,0.2]}}, E={"methods":["BL","RP","Robust","MV","MinV","InvVol","EW"],"labels":{"BL":"Black-Litterman","RP":"리스크 패리티","Robust":"로버스트 평균-분산","MV":"평균-분산","MinV":"최소분산","InvVol":"역변동성","EW":"동일가중"},"ports":{"BL":[10.0,20.0,3.0,32.0,12.0,6.3,0.0,2.0,2.0,2.0,1.0,1.7,0.0,8.0],"RP":[10.0,20.0,3.0,15.0,6.4,8.3,5.0,5.9,6.8,3.5,5.7,5.8,3.6,1.0],"Robust":[10.0,20.0,3.0,32.0,12.0,7.5,0.0,2.0,2.0,2.0,1.0,0.5,0.0,8.0],"MV":[10.0,20.0,3.0,15.0,12.0,4.7,5.0,3.1,7.5,2.0,6.1,6.0,0.0,5.6],"MinV":[10.0,20.0,3.0,32.0,12.0,8.0,0.0,2.0,2.0,2.0,1.0,0.0,0.0,8.0],"InvVol":[10.6,21.1,3.2,15.8,8.5,6.8,4.5,3.9,3.4,2.1,3.8,5.6,2.4,8.4],"EW":[8.5,17.1,6.1,12.8,6.1,6.1,4.3,6.1,6.1,6.1,6.0,5.1,3.4,6.1]},"stats":{"BL":[4.54,6.21],"RP":[5.12,7.74],"Robust":[4.52,6.19],"MV":[5.0,7.07],"MinV":[4.52,6.18],"InvVol":[4.87,7.13],"EW":[5.16,7.81]},"vote":{"borda":{"BL":111,"RP":98,"Robust":84,"MV":47,"MinV":67,"InvVol":26,"EW":8},"avgrank":{"BL":1.71,"RP":2.33,"Robust":3.0,"MV":4.76,"MinV":3.81,"InvVol":5.76,"EW":6.62},"firsts":{"BL":12,"RP":3,"Robust":4,"MV":1,"MinV":1,"InvVol":0,"EW":0},"n":21},"risk":{"BL":{"stress":{"2008형 신용경색":-13.4,"2020형 급락":-9.9,"금리 200bp 급등":-11.0,"원화 급락":1.4},"top3":75.5,"liq":90.0,"cvar":8.3,"vol":6.21,"verdict":"승인"},"RP":{"stress":{"2008형 신용경색":-21.5,"2020형 급락":-15.2,"금리 200bp 급등":-11.5,"원화 급락":3.7},"top3":58.5,"liq":71.1,"cvar":10.9,"vol":7.74,"verdict":"승인"},"Robust":{"stress":{"2008형 신용경색":-13.1,"2020형 급락":-9.8,"금리 200bp 급등":-11.1,"원화 급락":1.5},"top3":75.7,"liq":90.7,"cvar":8.2,"vol":6.19,"verdict":"승인"},"MV":{"stress":{"2008형 신용경색":-19.7,"2020형 급락":-13.7,"금리 200bp 급등":-11.5,"원화 급락":2.9},"top3":65.0,"liq":73.9,"cvar":9.6,"vol":7.07,"verdict":"승인"},"MinV":{"stress":{"2008형 신용경색":-13.0,"2020형 급락":-9.7,"금리 200bp 급등":-11.1,"원화 급락":1.5},"top3":75.8,"liq":91.0,"cvar":8.2,"vol":6.18,"verdict":"승인"},"InvVol":{"stress":{"2008형 신용경색":-19.1,"2020형 급락":-13.8,"금리 200bp 급등":-10.7,"원화 급락":2.9},"top3":66.8,"liq":80.1,"cvar":9.8,"vol":7.13,"verdict":"승인"},"EW":{"stress":{"2008형 신용경색":-22.2,"2020형 급락":-15.5,"금리 200bp 급등":-11.0,"원화 급락":3.6},"top3":55.2,"liq":69.6,"cvar":11.0,"vol":7.81,"verdict":"조건부"}},"cw":{"BL":25.4,"RP":22.4,"Robust":19.2,"MV":10.8,"MinV":15.3,"InvVol":5.9,"EW":0.9},"combined":[10.0,20.0,3.0,25.2,10.5,7.1,2.0,3.1,3.8,2.4,2.8,2.8,1.0,6.2],"combined_stats":[4.74,6.68],"combined_rc":[20.4,40.4,6.3,7.1,3.2,2.8,1.2,3.1,4.0,5.0,2.9,1.9,1.5,0.2],"contrib":{"BL":[2.54,5.08,0.76,8.13,3.05,1.6,0.0,0.51,0.51,0.51,0.25,0.43,0.0,2.03],"RP":[2.24,4.49,0.67,3.36,1.44,1.86,1.12,1.32,1.52,0.78,1.28,1.3,0.81,0.22],"Robust":[1.92,3.84,0.58,6.15,2.31,1.45,0.0,0.38,0.38,0.38,0.19,0.09,0.0,1.54],"MV":[1.08,2.15,0.32,1.61,1.29,0.51,0.54,0.33,0.81,0.22,0.66,0.65,0.0,0.6],"MinV":[1.53,3.07,0.46,4.91,1.84,1.23,0.0,0.31,0.31,0.31,0.15,0.0,0.0,1.23],"InvVol":[0.63,1.26,0.19,0.94,0.5,0.41,0.27,0.23,0.2,0.13,0.22,0.33,0.14,0.5],"EW":[0.08,0.16,0.06,0.12,0.06,0.06,0.04,0.06,0.06,0.06,0.05,0.05,0.03,0.06]},"combined_risk":{"stress":{"2008형 신용경색":-16.2,"2020형 급락":-11.7,"금리 200bp 급등":-11.2,"원화 급락":2.2},"cvar":9.0,"liq":83.5,"top3":67.8},"bt":{"months":["2016-01","2016-02","2016-03","2016-04","2016-05","2016-06","2016-07","2016-08","2016-09","2016-10","2016-11","2016-12","2017-01","2017-02","2017-03","2017-04","2017-05","2017-06","2017-07","2017-08","2017-09","2017-10","2017-11","2017-12","2018-01","2018-02","2018-03","2018-04","2018-05","2018-06","2018-07","2018-08","2018-09","2018-10","2018-11","2018-12","2019-01","2019-02","2019-03","2019-04","2019-05","2019-06","2019-07","2019-08","2019-09","2019-10","2019-11","2019-12","2020-01","2020-02","2020-03","2020-04","2020-05","2020-06","2020-07","2020-08","2020-09","2020-10","2020-11","2020-12","2021-01","2021-02","2021-03","2021-04","2021-05","2021-06","2021-07","2021-08","2021-09","2021-10","2021-11","2021-12","2022-01","2022-02","2022-03","2022-04","2022-05","2022-06","2022-07","2022-08","2022-09","2022-10","2022-11","2022-12","2023-01","2023-02","2023-03","2023-04","2023-05","2023-06","2023-07","2023-08","2023-09","2023-10","2023-11","2023-12","2024-01","2024-02","2024-03","2024-04","2024-05","2024-06","2024-07","2024-08","2024-09","2024-10","2024-11","2024-12","2025-01","2025-02","2025-03","2025-04","2025-05","2025-06","2025-07","2025-08","2025-09","2025-10","2025-11","2025-12","2026-01","2026-02","2026-03","2026-04","2026-05","2026-06","2026-07","2026-08"],"cut":102,"paths":{"결합(에이전트)":[100.0,100.1,100.3,98.6,102.2,104.2,104.3,107.4,110.0,106.4,111.4,110.5,110.0,113.3,114.1,113.9,116.1,119.5,124.1,124.4,127.9,126.4,126.6,127.3,127.3,128.6,132.6,132.8,132.7,130.4,133.7,135.1,134.5,130.1,130.5,130.9,127.7,132.2,131.0,132.0,131.5,133.0,134.6,135.3,135.9,140.4,136.9,133.4,131.5,128.2,130.1,131.6,133.6,135.1,137.6,142.2,141.0,140.6,141.1,137.8,138.9,140.6,139.0,137.8,142.7,148.8,150.7,150.4,151.8,154.1,154.0,161.4,159.9,165.2,160.1,161.6,164.9,162.0,158.9,159.1,157.3,161.0,170.5,173.6,172.9,175.2,172.4,172.3,170.1,173.8,171.0,166.8,171.4,169.4,165.2,166.4,167.5,168.5,167.8,168.9,168.6,165.6,166.9,167.9,162.4,157.9,152.8,151.9,154.5,153.7,157.3,159.6,157.5,166.8,163.2,160.4,165.1,167.4,161.4,167.7,167.3,162.5,164.9,164.7,163.0,168.4,172.1,169.9,175.1],"BL 고정":[100.0,100.1,100.2,98.6,101.4,102.9,103.2,105.3,107.2,104.5,108.4,107.4,106.6,109.3,109.2,109.1,110.3,112.4,116.3,116.4,119.6,118.0,117.9,118.6,118.7,119.6,122.9,123.0,122.7,120.2,123.2,124.1,123.8,120.1,120.4,120.3,117.5,121.4,120.3,121.0,120.1,121.4,122.5,123.3,124.0,127.3,124.3,121.6,119.9,117.1,118.1,119.0,120.7,121.7,123.7,127.8,126.6,126.1,126.4,123.9,124.6,125.9,124.8,123.7,127.6,132.1,133.4,133.3,134.2,136.4,136.6,141.9,141.0,144.3,139.8,141.4,144.4,142.2,140.2,139.9,138.1,141.2,148.4,151.1,150.2,152.0,149.8,149.7,147.6,150.0,147.5,143.5,147.3,145.5,142.3,143.2,144.3,145.0,144.3,144.8,144.1,141.7,142.8,143.5,139.1,135.4,131.1,130.4,132.7,131.9,134.8,136.7,135.2,142.2,139.1,137.0,140.8,142.7,138.1,143.0,142.8,138.7,140.6,140.2,138.7,143.1,146.1,144.5,148.1],"RP 고정":[100.0,100.1,100.7,98.9,101.7,103.5,103.8,106.8,108.8,105.6,110.3,109.6,109.1,111.8,111.7,111.6,113.9,116.8,122.1,122.2,125.7,124.0,123.8,124.2,124.6,125.8,129.9,129.6,129.5,126.0,129.0,130.5,129.7,124.5,125.1,126.0,122.1,127.6,125.8,126.9,125.8,126.2,128.1,128.4,128.2,132.7,127.6,124.0,121.2,117.9,119.0,120.4,122.2,124.3,126.4,130.2,129.8,128.7,128.8,124.7,125.7,127.2,125.0,124.3,128.2,133.6,135.3,134.2,135.7,137.2,137.2,143.5,141.3,145.7,140.8,142.1,145.0,141.6,139.2,138.8,136.9,139.9,148.5,151.2,150.1,152.1,148.7,148.0,146.0,150.3,146.6,142.2,146.3,144.1,139.6,140.3,141.4,142.5,141.9,143.0,143.0,139.7,140.1,141.3,136.0,131.9,127.5,126.4,128.5,128.0,131.5,133.5,130.9,140.7,137.7,134.8,139.2,141.0,134.9,141.1,140.5,136.4,138.8,139.2,137.7,142.8,146.0,143.7,149.8],"동일가중":[100.0,100.0,100.8,99.2,102.0,103.4,103.4,106.3,108.4,105.1,109.6,109.1,108.8,111.7,112.1,111.7,114.6,117.9,123.2,122.8,125.8,124.2,124.0,123.8,124.0,125.5,129.6,129.7,129.2,125.8,129.0,130.7,130.0,124.7,125.2,126.2,122.4,127.9,126.5,127.4,126.4,126.6,128.9,128.8,128.9,133.0,127.5,123.7,121.2,117.7,118.8,120.5,122.3,124.6,126.5,129.9,129.6,128.5,128.9,124.5,125.3,127.0,124.7,124.2,128.1,133.6,135.6,134.3,135.8,137.0,136.5,142.8,140.6,145.5,140.9,141.5,144.2,141.0,138.1,138.2,136.7,139.3,148.1,150.8,149.9,152.5,149.8,149.0,147.4,152.4,148.1,143.6,147.4,145.4,140.6,141.1,142.2,143.2,142.9,144.3,144.1,141.0,141.4,142.8,137.6,133.4,128.9,127.9,130.3,129.9,133.4,134.9,132.1,142.5,139.7,136.7,140.5,142.2,135.8,142.1,141.3,137.5,139.8,140.6,139.1,143.9,146.8,144.0,150.5],"시장균형":[100.0,100.1,100.0,98.0,101.7,103.8,103.7,107.3,110.0,106.1,111.9,111.3,110.8,114.4,114.6,114.3,116.7,120.3,126.1,126.2,129.9,128.5,127.7,127.7,127.9,129.6,134.1,134.8,133.9,129.4,133.5,134.9,134.1,128.1,128.3,128.3,124.5,130.4,128.5,129.3,127.7,129.0,130.5,130.8,131.0,136.7,130.6,126.1,122.8,118.2,120.3,122.2,125.0,127.0,129.9,134.8,134.1,132.6,132.7,128.2,128.7,130.9,128.1,126.8,131.7,137.8,139.4,138.5,140.1,142.3,141.7,149.4,147.7,153.9,148.0,149.2,152.7,148.8,146.0,146.0,143.8,147.1,157.4,161.0,159.1,162.3,158.5,157.7,155.6,159.9,155.3,148.2,152.8,150.5,145.8,146.4,147.5,148.3,147.9,148.8,148.6,144.7,145.9,146.2,139.8,134.6,129.2,128.2,130.5,130.3,134.0,135.8,133.3,143.8,139.1,135.7,139.8,142.7,136.3,142.5,142.0,137.5,140.4,139.8,137.2,143.6,147.4,143.7,149.4]},"pre":{"결합(에이전트)":[6.21,6.68,0.93,-8.7],"BL 고정":[4.28,5.92,0.72,-8.1],"RP 고정":[4.05,7.26,0.56,-11.2],"동일가중":[4.16,7.3,0.57,-11.5],"시장균형":[4.54,8.44,0.54,-13.6]},"post":{"결합(에이전트)":[2.24,8.58,0.26,-9.5],"BL 고정":[1.7,7.94,0.21,-9.1],"RP 고정":[3.12,9.97,0.31,-10.5],"동일가중":[2.91,10.05,0.29,-10.4],"시장균형":[1.12,11.04,0.1,-12.3]}}};
+const A=D.assets,N=A.length,M=E.methods,L=E.labels;
+const p1=v=>v.toFixed(1), p2=v=>v.toFixed(2);
+const COL=['#1B6A52','#2C5A78','#8F6210','#9C3626','#5B6E7A','#6B8F3F','#7A5A8F'];
+
+document.querySelectorAll('.stage').forEach(el=>{el.onclick=()=>{
+  document.querySelectorAll('.stage').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.screen').forEach(x=>x.classList.remove('on'));
+  el.classList.add('on');document.getElementById(el.dataset.s).classList.add('on');
+  window.scrollTo(0,0);};});
+
+/* 1 */
+document.getElementById('k1').textContent=p2(E.combined_stats[0])+'%';
+document.getElementById('k2').textContent=p2(E.combined_stats[1])+'%';
+(()=>{const w=E.combined,mx=Math.max(...w);
+let h='<thead><tr><th>자산군</th><th class="r">비중</th><th style="width:30%"></th><th class="r">시장균형</th><th class="r">이탈</th></tr></thead><tbody>';
+A.forEach((a,i)=>{const dv=w[i]-a.mkt,c=Math.abs(dv)<1?'var(--mute)':(dv>0?'var(--jade)':'var(--rust)');
+h+=`<tr><td>${a.name}</td><td class="r num">${p1(w[i])}</td><td><div class="bar"><i style="width:${w[i]/mx*100}%"></i></div></td>
+<td class="r num" style="color:var(--mute)">${p1(a.mkt)}</td><td class="r num" style="color:${c}">${dv>0?'+':''}${p1(dv)}</td></tr>`;});
+document.getElementById('t-final').innerHTML=h+'</tbody>';})();
+
+document.getElementById('t-stages').innerHTML='<table><tbody>'+
+[['매크로 에이전트',1,'국면 분류 완료','ok'],['자산군 에이전트',14,'CMA 산출 · 확신도 경고','warn'],
+['공분산 에이전트',1,'축소 적용 α=0.31','ok'],['포트폴리오 구축',22,'7개 유효 · 15개 반려','ok'],
+['상호 검토 · 순위투표',21,'비판 47건 · 보르다 집계','ok'],['위험관리 에이전트',1,'1건 조건부','warn'],
+['CIO 결합',1,'7개 결합 · 메모 생성','ok'],['백테스트 · 검증',2,'룩어헤드 확인','bad']]
+.map(r=>`<tr><td>${r[0]}</td><td class="r num" style="width:38px;color:var(--mute)">${r[1]}</td>
+<td style="font-size:12px">${r[2]}</td><td class="r"><span class="dot ${r[3]}"></span></td></tr>`).join('')+'</tbody></table>';
+
+/* 2 */
+(()=>{let h='<thead><tr><th>자산군</th><th class="r">하한</th><th class="r">기준</th><th class="r">상한</th><th style="width:32%">허용범위</th></tr></thead><tbody>',g='';
+A.forEach(a=>{if(a.group!==g){g=a.group;h+=`<tr class="grp"><td colspan="5">${g}</td></tr>`}
+h+=`<tr><td>${a.name}</td><td class="r num">${p1(a.lo)}</td><td class="r num"><b>${p1(a.mkt)}</b></td><td class="r num">${p1(a.hi)}</td>
+<td><div class="bar" style="background:transparent"><span style="position:absolute;left:${a.lo/40*100}%;width:${(a.hi-a.lo)/40*100}%;top:0;bottom:0;background:var(--soft)"></span>
+<span style="position:absolute;left:${a.mkt/40*100}%;width:2px;top:-2px;bottom:-2px;background:var(--jade)"></span></div></td></tr>`;});
+document.getElementById('t-bands').innerHTML=h+'</tbody>';})();
+
+/* 4 */
+(()=>{let h='<thead><tr><th>자산군</th><th class="r">Grinold-Kroner</th><th class="r">CAPE 기반</th><th class="r">과거평균</th><th class="r">최종 채택</th><th class="r">변동성</th><th class="r">확신도</th><th style="width:80px"></th></tr></thead><tbody>',b=0,g='';
+A.forEach(a=>{if(a.hist>a.final)b++;if(a.group!==g){g=a.group;h+=`<tr class="grp"><td colspan="8">${g}</td></tr>`}
+const cc=a.conf<0.5?'var(--rust)':(a.conf<0.65?'var(--amber)':'var(--jade)');
+h+=`<tr><td>${a.name}</td><td class="r num" style="color:var(--mute)">${p2(a.gk)}</td><td class="r num" style="color:var(--mute)">${p2(a.cape)}</td>
+<td class="r num" style="${a.hist>a.final?'color:var(--rust)':''}">${p2(a.hist)}</td><td class="r num"><b>${p2(a.final)}</b></td>
+<td class="r num" style="color:var(--mute)">${p1(a.vol)}</td><td class="r num" style="color:${cc}">${a.conf.toFixed(2)}</td>
+<td><div class="bar"><i style="width:${a.conf*100}%;background:${cc}"></i></div></td></tr>`;});
+document.getElementById('t-cma').innerHTML=h+'</tbody>';document.getElementById('hb').textContent=b;})();
+
+/* 5 */
+function heat(k){const Mx=D[k],el=document.getElementById('heat');
+el.style.gridTemplateColumns=`78px repeat(${N},1fr)`;let h='<div class="lbl"></div>';
+A.forEach(a=>h+=`<div class="lbt">${a.name.replace(/\(.*\)/,'')}</div>`);
+Mx.forEach((row,i)=>{h+=`<div class="lbl">${A[i].name}</div>`;
+row.forEach((v,j)=>{const t=Math.max(0,Math.min(1,v));
+h+=`<div style="background:rgb(${Math.round(247-160*t)},${Math.round(250-140*t)},${Math.round(249-160*t)});color:${t>.55?'#fff':'#8A959A'}">${i===j?'':v.toFixed(2).slice(1)}</div>`;});});
+el.innerHTML=h;}
+heat('corr_sample');
+document.querySelectorAll('[data-cm]').forEach(c=>c.onclick=()=>{document.querySelectorAll('[data-cm]').forEach(x=>x.classList.remove('on'));c.classList.add('on');heat(c.dataset.cm);});
+
+/* 6 */
+function ptable(v){const src=v==='w'?E.ports:null;
+let h=`<thead><tr><th>자산군</th>${M.map(m=>`<th class="r">${L[m]}</th>`).join('')}<th class="r" style="color:var(--mute)">시장균형</th></tr></thead><tbody>`,g='';
+A.forEach((a,i)=>{if(a.group!==g){g=a.group;h+=`<tr class="grp"><td colspan="${M.length+2}">${g}</td></tr>`}
+h+=`<tr><td>${a.name}</td>`;
+M.forEach(m=>{const val=v==='w'?E.ports[m][i]:(D.rc[m]?D.rc[m][i]:null);
+h+=`<td class="r num">${val===null?'—':p1(val)}</td>`;});
+h+=`<td class="r num" style="color:var(--mute)">${v==='w'?p1(a.mkt):'—'}</td></tr>`;});
+h+=`<tr class="tot"><td>기대수익률 / 변동성</td>${M.map(m=>`<td class="r num">${p2(E.stats[m][0])} / ${p2(E.stats[m][1])}</td>`).join('')}<td class="r num" style="color:var(--mute)">5.30 / 8.73</td></tr>`;
+document.getElementById('t-port').innerHTML=h+'</tbody>';}
+ptable('w');
+document.querySelectorAll('[data-view]').forEach(c=>c.onclick=()=>{document.querySelectorAll('[data-view]').forEach(x=>x.classList.remove('on'));c.classList.add('on');ptable(c.dataset.view);});
+
+/* 6 무제약 */
+(()=>{const w=D.port.MV_unc,idx=w.map((v,i)=>i).sort((a,b)=>Math.abs(w[b])-Math.abs(w[a])).slice(0,7);
+let h='<thead><tr><th>자산군</th><th class="r">무제약 해</th><th class="r">IPS 적용 후</th></tr></thead><tbody>';
+idx.forEach(i=>{const ex=w[i]<0||w[i]>100;
+h+=`<tr><td>${A[i].name}</td><td class="r num" style="${ex?'color:var(--rust);font-weight:600':''}">${w[i].toFixed(0)}%</td><td class="r num">${p1(D.port.MV[i])}%</td></tr>`;});
+document.getElementById('t-unc').innerHTML=h+'</tbody>';})();
+
+/* 7 순위투표 */
+(()=>{const v=E.vote,byB=[...M].sort((a,b)=>v.borda[b]-v.borda[a]),byF=[...M].sort((a,b)=>v.firsts[b]-v.firsts[a]);
+const mxB=Math.max(...Object.values(v.borda));
+let h=`<thead><tr><th style="width:36px">순위</th><th>방법론</th><th class="r">1위표</th><th class="r">다수결 순위</th><th class="r">평균 순위</th><th class="r">보르다</th><th style="width:24%"></th></tr></thead><tbody>`;
+byB.forEach((m,i)=>{const fr=byF.indexOf(m)+1,flip=fr!==i+1;
+h+=`<tr${i<3?' class="hl"':''}><td class="num">${i+1}</td><td><b>${L[m]}</b></td>
+<td class="r num">${v.firsts[m]}</td>
+<td class="r num" style="color:${flip?'var(--rust)':'var(--mute)'}">${fr}${flip?' ⇄':''}</td>
+<td class="r num">${v.avgrank[m].toFixed(2)}</td><td class="r num"><b>${v.borda[m]}</b></td>
+<td><div class="bar"><i style="width:${v.borda[m]/mxB*100}%"></i></div></td></tr>`;});
+h+=`<tr class="grp"><td colspan="7">계층적 리스크 패리티 — IPS §4-2 위반으로 투표 대상에서 제외</td></tr>`;
+document.getElementById('t-vote').innerHTML=h+'</tbody>';
+const f2=byF[1],b2=byB[1];
+document.getElementById('vote-note').innerHTML=
+`<b>단순 다수결이었다면 순위가 뒤집혔습니다</b>${L[f2]}은 1위표 ${v.firsts[f2]}개로 다수결 2위지만,
+평균 순위가 ${v.avgrank[f2].toFixed(2)}로 낮아 보르다 ${v.borda[f2]}점에 그쳤습니다. 반면 ${L[b2]}은
+1위표가 ${v.firsts[b2]}개뿐이지만 평균 순위 ${v.avgrank[b2].toFixed(2)}로 고르게 높은 평가를 받아
+보르다 ${v.borda[b2]}점으로 2위에 올랐습니다. 호불호가 갈리는 후보와 두루 인정받는 후보를
+구분하는 것이 순위 투표의 목적이며, 이 순위가 그대로 결합 가중치가 됩니다.`;})();
+
+/* 8 스트레스 */
+(()=>{const SC=Object.keys(E.risk[M[0]].stress);
+let h=`<thead><tr><th>방법론</th>${SC.map(s=>`<th class="r">${s}</th>`).join('')}<th class="r">최악</th></tr></thead><tbody>`;
+M.forEach(m=>{const s=E.risk[m].stress,w=Math.min(...Object.values(s));
+h+=`<tr><td>${L[m]}</td>${SC.map(k=>{const v=s[k];
+return `<td class="r num" style="color:${v<-20?'var(--rust)':(v<0?'#3C4C55':'var(--jade)')}">${v>0?'+':''}${v}</td>`;}).join('')}
+<td class="r num" style="font-weight:600;color:${w<-20?'var(--rust)':'#3C4C55'}">${w}</td></tr>`;});
+const cs=E.combined_risk.stress,cw=Math.min(...Object.values(cs));
+h+=`<tr class="tot"><td>결합 포트폴리오</td>${SC.map(k=>`<td class="r num">${cs[k]>0?'+':''}${cs[k]}</td>`).join('')}<td class="r num">${cw}</td></tr>`;
+document.getElementById('t-stress').innerHTML=h+'</tbody>';})();
+
+(()=>{let h='<thead><tr><th>방법론</th><th class="r">변동성</th><th class="r">CVaR 95%</th><th class="r">상위3 위험집중</th><th class="r">유동성</th><th style="width:74px">판정</th></tr></thead><tbody>';
+M.forEach(m=>{const r=E.risk[m],vd=r.verdict;
+h+=`<tr${vd!=='승인'?' style="background:#FCF8EF"':''}><td>${L[m]}</td><td class="r num">${p2(r.vol)}%</td>
+<td class="r num">${p1(r.cvar)}%</td><td class="r num" style="${r.top3>80?'color:var(--rust);font-weight:600':''}">${p1(r.top3)}%</td>
+<td class="r num">${p1(r.liq)}%</td><td><span class="tag ${vd==='승인'?'ok':(vd==='조건부'?'warn':'bad')}">${vd}</span></td></tr>`;});
+document.getElementById('t-risk').innerHTML=h+'</tbody>';})();
+
+(()=>{const c=E.combined_risk,w=Math.min(...Object.values(c.stress));
+document.getElementById('k-risk').innerHTML=
+[['최악 스트레스 손실',w+'%','2008형 신용경색'],['CVaR 95%',p1(c.cvar)+'%','정규 근사'],
+ ['상위3 위험집중',p1(c.top3)+'%','개별 후보 최대 75.5%'],['유동성 자산',p1(c.liq)+'%','§5-1 요건 충족']]
+.map(k=>`<div class="kpi"><div class="l">${k[0]}</div><div class="v num">${k[1]}</div><div class="s">${k[2]}</div></div>`).join('');})();
+
+/* 9 결합 */
+(()=>{const v=E.vote,byB=[...M].sort((a,b)=>E.cw[b]-E.cw[a]);
+let h='<thead><tr><th>방법론</th><th class="r">보르다</th><th class="r">위험 판정</th><th class="r">위험계수</th><th class="r">결합 가중치</th><th style="width:26%"></th></tr></thead><tbody>';
+const mx=Math.max(...Object.values(E.cw));
+byB.forEach((m,i)=>{const vd=E.risk[m].verdict,k=vd==='승인'?'1.0':(vd==='조건부'?'0.5':'0.0');
+h+=`<tr><td><b>${L[m]}</b></td><td class="r num">${v.borda[m]}</td>
+<td class="r"><span class="tag ${vd==='승인'?'ok':(vd==='조건부'?'warn':'bad')}">${vd}</span></td>
+<td class="r num">${k}</td><td class="r num"><b>${p1(E.cw[m])}%</b></td>
+<td><div class="bar"><i style="width:${E.cw[m]/mx*100}%;background:${COL[M.indexOf(m)]}"></i></div></td></tr>`;});
+document.getElementById('t-cw').innerHTML=h+'</tbody>';
+document.getElementById('blw').textContent=p1(E.cw['BL']);})();
+
+(()=>{document.getElementById('lg-contrib').innerHTML=
+M.map((m,i)=>`<span><i style="background:${COL[i]}"></i>${L[m]}</span>`).join('');
+let h=`<thead><tr><th>자산군</th><th class="r">최종</th><th style="width:34%">방법론별 기여</th>${M.map(m=>`<th class="r" style="font-size:10.5px">${L[m].slice(0,4)}</th>`).join('')}</tr></thead><tbody>`;
+let g='';
+A.forEach((a,i)=>{if(a.group!==g){g=a.group;h+=`<tr class="grp"><td colspan="${M.length+3}">${g}</td></tr>`}
+const tot=E.combined[i];
+h+=`<tr><td>${a.name}</td><td class="r num"><b>${p1(tot)}</b></td>
+<td><div class="stack">${M.map((m,j)=>`<span style="width:${E.contrib[m][i]/tot*100}%;background:${COL[j]}"></span>`).join('')}</div></td>
+${M.map(m=>`<td class="r num" style="color:var(--mute);font-size:11.5px">${E.contrib[m][i].toFixed(1)}</td>`).join('')}</tr>`;});
+document.getElementById('t-attr').innerHTML=h+'</tbody>';})();
+
+/* 10 백테스트 */
+(()=>{const b=E.bt,ks=Object.keys(b.paths),T=b.months.length;
+const W=900,H=330,PL=48,PR=14,PT=14,PB=34;
+const all=ks.flatMap(k=>b.paths[k]),mn=Math.min(...all),mx=Math.max(...all);
+const X=t=>PL+t/T*(W-PL-PR), Y=v=>H-PB-(v-mn)/(mx-mn)*(H-PT-PB);
+let s=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto">`;
+s+=`<rect x="${PL}" y="${PT}" width="${W-PL-PR}" height="${H-PT-PB}" fill="#FAFCFB" stroke="#D7DEDB"/>`;
+for(let v=Math.ceil(mn/25)*25;v<=mx;v+=25){s+=`<line x1="${PL}" y1="${Y(v)}" x2="${W-PR}" y2="${Y(v)}" stroke="#EBF0EE"/>
+<text x="${PL-6}" y="${Y(v)+3}" font-size="9.5" fill="#657379" text-anchor="end">${v}</text>`;}
+for(let t=0;t<T;t+=12){s+=`<text x="${X(t)}" y="${H-PB+15}" font-size="9.5" fill="#657379" text-anchor="middle">${b.months[t].slice(0,4)}</text>`;}
+s+=`<rect x="${X(b.cut)}" y="${PT}" width="${W-PR-X(b.cut)}" height="${H-PT-PB}" fill="#1B6A52" opacity="0.045"/>`;
+s+=`<line x1="${X(b.cut)}" y1="${PT}" x2="${X(b.cut)}" y2="${H-PB}" stroke="#9C3626" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+s+=`<text x="${X(b.cut)+6}" y="${PT+13}" font-size="10" fill="#9C3626">모델 학습 종료 2024-06</text>`;
+ks.forEach((k,i)=>{const w=k.startsWith('결합')?2.4:1.4;
+s+=`<polyline points="${b.paths[k].slice(1).map((v,t)=>X(t)+','+Y(v)).join(' ')}" fill="none" stroke="${COL[i]}" stroke-width="${w}"/>`;});
+document.getElementById('bt-chart').innerHTML=s+'</svg>';
+document.getElementById('lg-bt').innerHTML=ks.map((k,i)=>`<span><i style="background:${COL[i]};height:${k.startsWith('결합')?4:3}px"></i>${k}</span>`).join('');
+
+function seg(id,data){let h='<thead><tr><th>전략</th><th class="r">연평균</th><th class="r">변동성</th><th class="r">수익/위험</th><th class="r">최대낙폭</th></tr></thead><tbody>';
+const best=Math.max(...ks.map(k=>data[k][0]));
+ks.forEach(k=>{const d=data[k],top=d[0]===best;
+h+=`<tr${k.startsWith('결합')?' class="hl"':''}><td${k.startsWith('결합')?' style="font-weight:600"':''}>${k}</td>
+<td class="r num"${top?' style="font-weight:600;color:var(--jade)"':''}>${p2(d[0])}%</td>
+<td class="r num">${p2(d[1])}%</td><td class="r num">${p2(d[2])}</td><td class="r num">${p1(d[3])}%</td></tr>`;});
+document.getElementById(id).innerHTML=h+'</tbody>';}
+seg('t-pre',b.pre);seg('t-post',b.post);
+document.getElementById('g1').textContent=p2(b.pre['결합(에이전트)'][0]-b.pre['BL 고정'][0]);
+document.getElementById('g2').textContent=p2(b.post['결합(에이전트)'][0]-b.post['BL 고정'][0]);})();
+
+/* 11 보정곡선 */
+(()=>{const pts=[[.3,.31],[.4,.37],[.5,.42],[.6,.47],[.7,.52],[.8,.58],[.9,.63]];
+const W=340,H=250,P=36;
+const X=v=>P+(v-.2)/.75*(W-P-14),Y=v=>H-P-(v-.2)/.75*(H-P-14);
+let s=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;height:auto">`;
+s+=`<rect x="${P}" y="14" width="${W-P-14}" height="${H-P-14}" fill="#FAFCFB" stroke="#D7DEDB"/>`;
+[.2,.4,.6,.8].forEach(v=>{s+=`<line x1="${X(v)}" y1="14" x2="${X(v)}" y2="${H-P}" stroke="#EBF0EE"/>
+<line x1="${P}" y1="${Y(v)}" x2="${W-14}" y2="${Y(v)}" stroke="#EBF0EE"/>
+<text x="${X(v)}" y="${H-P+14}" font-size="9.5" fill="#657379" text-anchor="middle">${v.toFixed(1)}</text>
+<text x="${P-6}" y="${Y(v)+3}" font-size="9.5" fill="#657379" text-anchor="end">${v.toFixed(1)}</text>`;});
+s+=`<line x1="${X(.2)}" y1="${Y(.2)}" x2="${X(.95)}" y2="${Y(.95)}" stroke="#9BA8AE" stroke-dasharray="3 3"/>
+<text x="${X(.70)}" y="${Y(.85)}" font-size="9.5" fill="#9BA8AE">완전 보정</text>
+<polyline points="${pts.map(p=>X(p[0])+','+Y(p[1])).join(' ')}" fill="none" stroke="#9C3626" stroke-width="2"/>`;
+pts.forEach(p=>s+=`<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="3.2" fill="#9C3626"/>`);
+s+=`<text x="${X(.60)}" y="${Y(.38)}" font-size="9.5" fill="#9C3626">에이전트 실측</text>
+<text x="${(W+P)/2}" y="${H-5}" font-size="10" fill="#657379" text-anchor="middle">에이전트가 보고한 확신도</text>
+<text x="11" y="${H/2}" font-size="10" fill="#657379" text-anchor="middle" transform="rotate(-90 11 ${H/2})">실제 적중률</text>`;
+document.getElementById('calib').innerHTML=s+'</svg>';})();
+</script>
+<style>
+.kind{font-size:11px;font-weight:500;padding:2px 8px;border-radius:2px;border:1px solid}
+.kind.llm{color:#5B3E8F;border-color:#C3B2DE;background:#F3EEFA}
+.kind.fn{color:#4A5A62;border-color:#C3CDD2;background:#EFF3F4}
+.kind.hy{color:#1B6A52;border-color:#A9CFC0;background:#F0F7F4}
+.kind.mx{color:#8F6210;border-color:#DDC79A;background:#FAF3E6}
+.rnd{display:grid;grid-template-columns:64px 1fr;gap:14px;padding:13px 0;border-bottom:1px solid var(--soft)}
+.rnd:last-child{border-bottom:none}
+.rnd .rn{font-size:11.5px;color:var(--mute);text-align:center}
+.rnd .rn b{display:block;font-size:19px;color:var(--ink);font-weight:600;line-height:1.2}
+.rnd .rt{font-size:13px;font-weight:600;margin-bottom:3px}
+.rnd .rd{font-size:12.5px;color:var(--mute);line-height:1.6}
+.ch{border:1px solid var(--rule);padding:11px 13px;margin-bottom:8px;background:var(--panel)}
+.ch .h{display:flex;gap:8px;align-items:center;margin-bottom:5px;font-size:11.5px}
+.ch .h b{color:var(--jade);font-weight:600}
+.ch p{margin:0;font-size:12.5px;line-height:1.6;color:#31424B}
+.dl{font-family:'SFMono-Regular',Consolas,monospace;font-size:11px;color:var(--mute)}
+</style>
+<script>
+(function(){
+var P={"debate":{"rounds":[{"n":1,"label":"초기 추정","agents":14,"calls":56,"note":"자산군 에이전트 14개가 병렬로 도구를 조회하고 각자 추정을 제출","changes":[]},{"n":2,"label":"반박 반영","agents":3,"calls":12,"note":"challenger가 지목한 3개 자산군만 재추정. 나머지 11개는 재실행하지 않음","changes":[{"a":"국내주식","before":5.9,"after":5.6,"cb":0.53,"ca":0.53,"why":"CAPE 재조회 결과 국내 밸류에이션이 상대적으로 높지 않아 하향"},{"a":"국내채권(크레딧)","before":3.9,"after":4.1,"cb":0.58,"ca":0.62,"why":"후기 순환 국면에서 스프레드 확대 가능성 반영, 근거 보강으로 확신도 상승"},{"a":"사모주식(PE)","before":8.2,"after":8.2,"cb":0.53,"ca":0.41,"why":"추정치는 유지했으나 방법론 편차 2.8%p를 반박당해 확신도만 하향"}]},{"n":3,"label":"재반박","agents":1,"calls":4,"note":"국내주식 하향으로 해외 선진과의 격차가 오히려 벌어져 재반박 발생","changes":[{"a":"국내주식","before":5.6,"after":5.75,"cb":0.53,"ca":0.47,"why":"양측 근거를 절충했으나 challenger가 수용하지 않음"}]}],"challenges":[{"r":1,"target":"국내주식","by":"challenger","status":"해결","text":"국내주식 5.90%와 해외주식(선진) 6.40%는 상관계수가 0.88입니다. 거의 같이 움직이는 두 자산에 0.50%p 차이를 두려면 그 차이를 만드는 구조적 근거가 필요합니다."},{"r":1,"target":"국내채권(크레딧)","by":"challenger","status":"해결","text":"국고 3.20% 대비 크레딧 3.90%, 스프레드 0.70%p입니다. 매크로 에이전트가 후기 순환으로 판정했다면 스프레드는 확대 방향인데 현재 추정은 과거 평균 수준입니다."},{"r":1,"target":"사모주식(PE)","by":"challenger","status":"부분 해결","text":"방법론 간 편차가 2.80%p인데 확신도 0.53은 과도합니다. 편차가 큰 자산일수록 확신도는 낮아야 합니다."},{"r":3,"target":"국내주식","by":"challenger","status":"미해결","text":"5.75%로 되돌린 근거가 1라운드 근거와 동일합니다. 반박에 대한 새로운 답변이 아니라 원래 입장으로의 회귀입니다."}],"final":{"resolved":3,"open":1,"forced":true,"action":"국내주식 확신도를 0.53에서 0.38로 하향 조정하고 미해결 반박을 감사 기록에 보존"},"saving":{"full":28,"actual":16,"pct":43}},"cost":{"nodes":[{"n":"asset_agents ×14","t":"LLM","calls":56,"tin":412000,"tout":38000,"sec":184,"tier":"상위","share":55.7},{"n":"토론 (2~3라운드)","t":"LLM","calls":16,"tin":128000,"tout":11000,"sec":58,"tier":"상위","share":17.2},{"n":"critic · ranker ×8","t":"LLM","calls":16,"tin":94000,"tout":9000,"sec":41,"tier":"하위","share":12.8},{"n":"macro_agent","t":"LLM","calls":5,"tin":31000,"tout":3400,"sec":17,"tier":"상위","share":4.3},{"n":"challenger","t":"LLM","calls":4,"tin":36000,"tout":2900,"sec":14,"tier":"상위","share":4.8},{"n":"cio · memo","t":"LLM","calls":3,"tin":28000,"tout":4100,"sec":19,"tier":"상위","share":4.0},{"n":"risk_agent","t":"하이브리드","calls":1,"tin":9000,"tout":1200,"sec":6,"tier":"하위","share":1.3},{"n":"optimizers ×22","t":"함수","calls":0,"tin":0,"tout":0,"sec":11,"tier":"—","share":0.0},{"n":"cov_estimator","t":"함수","calls":0,"tin":0,"tout":0,"sec":1,"tier":"—","share":0.0},{"n":"ips_gate · borda · combine","t":"함수","calls":0,"tin":0,"tout":0,"sec":1,"tier":"—","share":0.0}],"total":{"calls":101,"tok":807600,"sec":352,"bt_calls":4343,"cache_hit":0.0},"cache":[{"layer":"도구 캐시","key":"(tool, args, as_of)","hit":94.2,"note":"조회는 완전 결정론적"},{"layer":"LLM 캐시","key":"(node, model, prompt_hash, seed)","hit":100.0,"note":"재실행 시 호출 0"},{"layer":"체크포인트","key":"thread_id = bt_{as_of}","hit":null,"note":"중단 지점부터 재개"}]},"tools":{"log":[{"agent":"macro_agent","orig":{"get_indicator":6,"get_yield_curve":1},"mask":{"get_indicator":11,"get_yield_curve":2},"delta":"+87%","flag":"위반"},{"agent":"국내주식","orig":{"get_valuation":1,"get_returns":1},"mask":{"get_valuation":2,"get_returns":4,"get_peer_view":1},"delta":"+250%","flag":"위반"},{"agent":"해외주식(선진)","orig":{"get_valuation":1,"get_returns":2},"mask":{"get_valuation":2,"get_returns":3,"get_growth_forecast":1},"delta":"+100%","flag":"불안정"},{"agent":"해외주식(신흥)","orig":{"get_valuation":2,"get_returns":2},"mask":{"get_valuation":2,"get_returns":3},"delta":"+25%","flag":"불안정"},{"agent":"국내채권(국고)","orig":{"get_yield_curve":1,"get_returns":2},"mask":{"get_yield_curve":1,"get_returns":2},"delta":"0%","flag":"통과"},{"agent":"국내채권(크레딧)","orig":{"get_yield_curve":1,"get_returns":2},"mask":{"get_yield_curve":2,"get_returns":2},"delta":"+20%","flag":"통과"},{"agent":"사모주식(PE)","orig":{"get_valuation":1,"get_returns":3},"mask":{"get_valuation":1,"get_returns":3},"delta":"0%","flag":"통과"},{"agent":"원자재","orig":{"get_returns":2,"get_growth_forecast":1},"mask":{"get_returns":2,"get_growth_forecast":1},"delta":"0%","flag":"통과"}],"insight":"주식군 에이전트는 날짜를 가리자 데이터를 2~3배 더 조회했습니다. 원본 실행에서는 조회 없이도 답할 수 있었다는 뜻이며, 그 근거가 학습된 기억일 가능성을 시사합니다. 채권·대체투자군은 조회 패턴이 거의 동일해 실제 추론에 기반한 것으로 보입니다."},"kinds":{"s2":"결정론적 함수","s3":"LLM 에이전트","s4":"LLM 에이전트","s5":"결정론적 함수","s6":"결정론적 함수","s7":"LLM 에이전트","s8":"하이브리드","s9":"LLM 에이전트","s10":"결정론적 함수","s11":"혼합"}};
+
+/* ── 1. 화면별 노드 유형 배지 ── */
+var KC={'LLM 에이전트':'llm','결정론적 함수':'fn','하이브리드':'hy','혼합':'mx'};
+Object.keys(P.kinds).forEach(function(id){
+  var h=document.querySelector('#'+id+' .head h2'); if(!h)return;
+  var s=document.createElement('span');
+  s.className='kind '+KC[P.kinds[id]]; s.textContent=P.kinds[id];
+  h.appendChild(s);
+});
+
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;
+  if(html!==undefined)e.innerHTML=html;return e;}
+function panel(title,small){
+  var p=el('div','panel');
+  p.appendChild(el('h3',null,title+(small?' <small>'+small+'</small>':'')));
+  var b=el('div','pad'); p.appendChild(b); return {p:p,b:b};
+}
+
+/* ── 2. 실행 개요 · 비용 프로파일 ── */
+(function(){
+  var c=P.cost, k=panel('노드별 비용 프로파일','1회 실행 기준 · 실측값');
+  var mx=Math.max.apply(null,c.nodes.map(function(x){return x.share;}));
+  var h='<thead><tr><th>노드</th><th>유형</th><th class="r">호출</th><th class="r">토큰</th>'+
+        '<th style="width:18%">비중</th><th class="r">시간</th><th class="r">티어</th></tr></thead><tbody>';
+  c.nodes.forEach(function(x){
+    var kc=x.t==='LLM'?'llm':(x.t==='함수'?'fn':'hy');
+    h+='<tr><td>'+x.n+'</td><td><span class="kind '+kc+'">'+x.t+'</span></td>'+
+       '<td class="r num">'+(x.calls||'—')+'</td>'+
+       '<td class="r num">'+(x.tin?((x.tin+x.tout)/1000).toFixed(0)+'k':'—')+'</td>'+
+       '<td>'+(x.share?'<div class="bar"><i style="width:'+(x.share/mx*100)+'%"></i></div>':'')+'</td>'+
+       '<td class="r num">'+x.sec+'s</td>'+
+       '<td class="r" style="color:var(--mute);font-size:11.5px">'+x.tier+'</td></tr>';
+  });
+  h+='<tr class="tot"><td colspan="2">합계</td><td class="r num">'+c.total.calls+'</td>'+
+     '<td class="r num">'+(c.total.tok/1000).toFixed(0)+'k</td><td></td>'+
+     '<td class="r num">'+c.total.sec+'s</td><td></td></tr>';
+  k.b.appendChild(el('table',null,h+'</tbody>'));
+  k.b.appendChild(el('div','note','<b>백테스트 전체는 '+c.total.bt_calls.toLocaleString()+
+    '회 호출</b>43개 시점 × '+c.total.calls+'회입니다. asset_agents가 토큰의 '+
+    c.nodes[0].share+'%를 쓰므로 비용 절감은 이 노드에 집중해야 합니다. '+
+    'critic·ranker는 호출 수는 많지만 형식이 단순해 하위 모델로 내렸습니다.'));
+
+  var ch='<thead><tr><th>캐시 층</th><th>키</th><th class="r">적중률</th><th>비고</th></tr></thead><tbody>';
+  c.cache.forEach(function(x){
+    ch+='<tr><td><b>'+x.layer+'</b></td><td class="dl">'+x.key+'</td>'+
+        '<td class="r num">'+(x.hit===null?'—':x.hit.toFixed(1)+'%')+'</td>'+
+        '<td style="color:var(--mute)">'+x.note+'</td></tr>';
+  });
+  var k2=panel('캐싱 설계','재실행 비용 통제');
+  k2.b.appendChild(el('table',null,ch+'</tbody>'));
+  k2.b.appendChild(el('div','note ok','<b>캐시 키에 as_of 필수</b>빠뜨리면 시점 간 데이터가 '+
+    '섞여 룩어헤드를 스스로 만들어냅니다. 마스킹 테스트는 별도 네임스페이스(cache_ns="masked")로 '+
+    '분리해야 원본 응답이 재사용되지 않습니다.'));
+
+  var s1=document.getElementById('s1');
+  var g=el('div','grid2'); g.appendChild(k.p); g.appendChild(k2.p);
+  s1.appendChild(g);
+})();
+
+/* ── 3. CMA · 토론 라운드 ── */
+(function(){
+  var d=P.debate, k=panel('토론 라운드','challenger와의 반복 · 상한 3라운드');
+
+  d.rounds.forEach(function(r){
+    var row=el('div','rnd');
+    row.appendChild(el('div','rn','<b>'+r.n+'</b>라운드'));
+    var right=el('div');
+    right.appendChild(el('div','rt',r.label+
+      ' <span style="font-weight:400;color:#657379;font-size:11.5px">에이전트 '+r.agents+
+      '개 · 호출 '+r.calls+'회</span>'));
+    right.appendChild(el('div','rd',r.note));
+    if(r.changes.length){
+      var t='<table style="margin-top:9px"><thead><tr><th>자산군</th><th class="r">추정 변화</th>'+
+            '<th class="r">확신도</th><th style="width:46%">사유</th></tr></thead><tbody>';
+      r.changes.forEach(function(c){
+        var mv=c.after-c.before, col=Math.abs(mv)<0.01?'var(--mute)':(mv>0?'var(--jade)':'var(--rust)');
+        var cm=c.ca-c.cb, ccol=Math.abs(cm)<0.01?'var(--mute)':(cm>0?'var(--jade)':'var(--rust)');
+        t+='<tr><td>'+c.a+'</td>'+
+           '<td class="r num" style="color:'+col+'">'+c.before.toFixed(2)+' → '+c.after.toFixed(2)+'</td>'+
+           '<td class="r num" style="color:'+ccol+'">'+c.cb.toFixed(2)+' → '+c.ca.toFixed(2)+'</td>'+
+           '<td style="color:var(--mute);font-size:12px">'+c.why+'</td></tr>';
+      });
+      right.appendChild(el('div',null,t+'</tbody></table>'));
+    }
+    row.appendChild(right); k.b.appendChild(row);
+  });
+
+  k.b.appendChild(el('div','note b','<b>반박받은 자산군만 재추정합니다</b>'+
+    '전량 재실행이면 '+d.saving.full+'회인데 실제로는 '+d.saving.actual+'회에 그쳤습니다 ('+
+    d.saving.pct+'% 절감). 토론을 넣으면서도 비용이 선형으로 늘지 않게 하는 핵심 장치입니다.'));
+
+  var k2=panel('반박 기록','open_challenges');
+  d.challenges.forEach(function(c){
+    var tag=c.status==='해결'?'ok':(c.status==='미해결'?'bad':'warn');
+    var box=el('div','ch');
+    box.appendChild(el('div','h','<b>'+c.r+'라운드</b><span style="color:#657379">→ '+c.target+
+      '</span><span class="tag '+tag+'" style="margin-left:auto">'+c.status+'</span>'));
+    box.appendChild(el('p',null,c.text));
+    k2.b.appendChild(box);
+  });
+  k2.b.appendChild(el('div','note bad','<b>3라운드 상한 도달 · 강제 종료</b>'+
+    '미해결 반박 '+d.final.open+'건이 남은 채 종료됐습니다. '+d.final.action+
+    '했습니다. 반박을 버리지 않고 확신도에 반영하는 것이 이 설계의 핵심입니다 — '+
+    '수렴하지 못했다는 사실 자체가 정보이기 때문입니다.'));
+
+  var s4=document.getElementById('s4');
+  s4.appendChild(k.p); s4.appendChild(k2.p);
+})();
+
+/* ── 4. 검증 · 도구 호출 로그 ── */
+(function(){
+  var t=P.tools, k=panel('도구 호출 로그 대조','원본 실행 vs 날짜 마스킹');
+  function fmt(o){return Object.keys(o).map(function(n){
+    return '<span class="dl">'+n+'</span> <span class="num">'+o[n]+'</span>';}).join(' · ');}
+  var h='<thead><tr><th style="width:16%">에이전트</th><th>원본 조회</th><th>마스킹 조회</th>'+
+        '<th class="r">증가</th><th style="width:66px">판정</th></tr></thead><tbody>';
+  t.log.forEach(function(x){
+    var tg=x.flag==='통과'?'ok':(x.flag==='위반'?'bad':'warn');
+    h+='<tr'+(x.flag!=='통과'?' style="background:#FCF8EF"':'')+'><td>'+x.agent+'</td>'+
+       '<td style="font-size:11.5px">'+fmt(x.orig)+'</td>'+
+       '<td style="font-size:11.5px">'+fmt(x.mask)+'</td>'+
+       '<td class="r num" style="'+(x.delta!=='0%'?'font-weight:600':'color:var(--mute)')+'">'+x.delta+'</td>'+
+       '<td><span class="tag '+tg+'">'+x.flag+'</span></td></tr>';
+  });
+  k.b.appendChild(el('table',null,h+'</tbody>'));
+  k.b.appendChild(el('div','note bad','<b>조회량 증가가 곧 누출의 흔적입니다</b>'+t.insight));
+  k.b.appendChild(el('div','note ok','<b>이 진단이 가능한 이유</b>'+
+    '상태 스키마에 tool_calls를 남기도록 설계했기 때문입니다. 감사 추적용으로 넣은 필드가 '+
+    '룩어헤드 검증의 원재료가 됩니다. 산출물만 비교했다면 잡히지 않았을 차이입니다.'));
+
+  document.getElementById('s11').appendChild(k.p);
+})();
+})();
+</script>
+
+<style>
+.gl{border-bottom:1px dotted #7FA396;cursor:help;text-underline-offset:2px}
+.gl:hover{background:#EAF3EF}
+body.nogl .gl{border-bottom:none;cursor:inherit}
+body.nogl .gl:hover{background:none}
+.pop{position:absolute;z-index:60;width:310px;background:#fff;border:1px solid #B9C7C1;
+ box-shadow:0 6px 22px rgba(23,37,46,.16);padding:13px 15px;font-size:12.5px;line-height:1.65;
+ border-radius:3px;display:none}
+.pop.on{display:block}
+.pop .t{font-weight:600;font-size:13px;margin-bottom:5px;color:#17252E}
+.pop .d{color:#31424B}
+.pop .w{margin-top:8px;padding-top:8px;border-top:1px solid #EBF0EE;color:#657379;font-size:12px}
+.pop .x{position:absolute;top:7px;right:9px;color:#9BA8AE;cursor:pointer;font-size:15px;line-height:1}
+.sb-tg{padding:9px 14px;font-size:12.5px;color:#B6C3BF;cursor:pointer;user-select:none;
+ border-right:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:7px}
+.sb-tg:hover{background:rgba(255,255,255,.06)}
+.sw{width:28px;height:15px;border-radius:8px;background:#4CBF95;position:relative;transition:.15s}
+.sw::after{content:'';position:absolute;top:2px;left:15px;width:11px;height:11px;border-radius:50%;
+ background:#fff;transition:.15s}
+body.nogl .sw{background:#4B5A62}
+body.nogl .sw::after{left:2px}
+.plain{background:#F0F7F4;border:1px solid #C6DED3;border-left:3px solid #1B6A52;
+ padding:12px 15px;margin-bottom:18px;font-size:12.5px;line-height:1.7;color:#25423A}
+.plain b{display:block;margin-bottom:4px;font-size:12px;color:#1B6A52}
+body.nogl .plain{display:none}
+.rail-btn{margin:14px 20px 0;display:block;width:calc(100% - 40px);padding:8px;background:var(--wash);
+ border:1px solid var(--rule);font-size:12px;color:#3C4C55;cursor:pointer;font-family:inherit;border-radius:2px}
+.rail-btn:hover{background:var(--soft)}
+.modal{position:fixed;inset:0;background:rgba(23,37,46,.42);z-index:80;display:none;padding:40px 20px;overflow:auto}
+.modal.on{display:block}
+.modal-in{max-width:880px;margin:0 auto;background:#fff;border-radius:3px;padding:26px 30px}
+.modal-in h3{font-size:17px;margin-bottom:4px}
+.modal-in .sub{color:var(--mute);font-size:12.5px;margin-bottom:18px}
+.gcat{font-size:11.5px;color:var(--jade);font-weight:600;margin:18px 0 7px;
+ padding-bottom:5px;border-bottom:1px solid var(--soft)}
+.gitem{display:grid;grid-template-columns:180px 1fr;gap:14px;padding:7px 0;font-size:12.5px;
+ border-bottom:1px solid #F4F7F5}
+.gitem b{font-weight:600}
+.gitem span{color:#31424B;line-height:1.6}
+@media(max-width:700px){.gitem{grid-template-columns:1fr;gap:2px}}
+.modal-x{float:right;font-size:20px;color:#9BA8AE;cursor:pointer;line-height:1}
+</style>
+
+<div class="pop" id="pop"><span class="x" id="popx">×</span><div class="t"></div><div class="d"></div><div class="w"></div></div>
+<div class="modal" id="gmodal"><div class="modal-in">
+  <span class="modal-x" id="gx">×</span>
+  <h3>용어집</h3>
+  <div class="sub">화면에 점선으로 표시된 용어를 클릭하면 같은 설명이 그 자리에서 열립니다.</div>
+  <div id="glist"></div>
+</div></div>
+
+<script>
+const GL={
+/* 거버넌스 */
+'투자정책서':['기금이 "이런 원칙으로 돈을 굴리겠다"고 미리 못 박아 둔 문서. 목표수익률, 위험 한도, 자산별 비중 범위, 금지사항이 들어갑니다.','시장이 출렁일 때 감정적으로 판단하지 않도록, 냉정할 때 미리 정해두는 장치입니다. 이 프로젝트에서는 이 문서가 AI 에이전트를 통제하는 규칙이 됩니다.','거버넌스'],
+'IPS':['투자정책서(Investment Policy Statement)의 약자.','사람 운용역을 규율하던 문서를 그대로 AI 제어에 쓴다는 것이 이 논문의 핵심 주장입니다.','거버넌스'],
+'기준비중':['각 자산을 원칙적으로 이만큼 담겠다고 정해둔 목표치.','',  '거버넌스'],
+'허용범위':['기준비중에서 벗어나도 되는 폭. 주식 40% ± 5%p면 35~45% 사이는 괜찮다는 뜻입니다.','이 범위를 넘으면 강제로 되돌립니다. 결과적으로 오르면 팔고 내리면 사게 되어, 사람의 본능과 반대로 움직이게 만듭니다.','거버넌스'],
+'수탁자 책임':['남의 돈을 맡아 운용하는 사람이 지는 법적 의무.','왜 그렇게 결정했는지 설명할 수 있어야 한다는 요건이 따라옵니다. AI가 결정하면 이 설명을 누가 하느냐가 문제가 됩니다.','거버넌스'],
+'감사추적':['결정 과정을 나중에 되짚어볼 수 있도록 남긴 기록.','','거버넌스'],
+'전략적 자산배분':['3~5년을 내다보고 정하는 자산 비중의 기본 골격.','장기 수익의 몸통은 여기서 결정됩니다. 단기 매매 타이밍보다 훨씬 큰 영향을 줍니다.','거버넌스'],
+'LDI':['연금은 나중에 갚아야 할 돈이 정해져 있어서, 자산이 그 부채와 같은 방향으로 움직이도록 맞추는 접근.','금리가 떨어지면 갚아야 할 돈의 현재가치가 커집니다. 이때 자산도 같이 커져야 격차가 안 벌어집니다.','거버넌스'],
+'듀레이션':['금리가 1%p 움직일 때 가치가 몇 % 변하는지를 나타내는 민감도. 만기가 길수록 큽니다.','','거버넌스'],
+
+/* 가정 */
+'자본시장 가정':['각 자산이 앞으로 얼마나 벌고 얼마나 출렁일지에 대한 가정 묶음. 기대수익률·변동성·상관계수로 구성됩니다.','자산배분의 재료입니다. 이게 틀리면 뒤의 모든 계산이 틀립니다.','가정'],
+'CMA':['자본시장 가정(Capital Market Assumptions)의 약자.','','가정'],
+'기대수익률':['앞으로 연평균 몇 % 벌 것으로 보는 추정치.','확정된 값이 아니라 추정이라 오차가 큽니다. 이 오차를 어떻게 다루느냐가 자산배분 방법론들의 핵심 차이입니다.','가정'],
+'변동성':['수익률이 얼마나 출렁이는지를 숫자로 나타낸 것. 클수록 위험합니다.','','가정'],
+'Grinold-Kroner':['주식 수익을 배당 + 자사주 + 이익성장 + 물가 + 밸류에이션 변화로 쪼개서 각각 추정하는 방법.','과거 평균을 그냥 쓰면 "많이 오른 자산일수록 앞으로도 오른다"는 잘못된 결론이 나옵니다. 쪼개면 그중 반복되지 않을 부분을 걸러낼 수 있습니다.','가정'],
+'CAPE':['10년 평균 이익으로 계산한 주가수익비율.','지금 비싸게 사면 앞으로 수익률이 낮다는 관계를 이용합니다. 아파트를 시세보다 비싸게 사면 수익률이 낮은 것과 같은 원리입니다.','가정'],
+'확신도':['에이전트가 자기 추정을 얼마나 믿는지 스스로 매긴 값.','이 값이 클수록 시장 평균에서 크게 벗어난 배분을 하게 됩니다. 그래서 이 숫자가 정확한지가 중요합니다.','가정'],
+'상관계수':['두 자산이 함께 움직이는 정도. 1에 가까우면 거의 똑같이, 0이면 무관하게 움직입니다.','','가정'],
+'공분산':['자산들이 서로 어떻게 같이 움직이는지를 담은 표.','','가정'],
+'Ledoit-Wolf':['데이터가 부족해 상관계수가 들쭉날쭉할 때, 극단값을 평균 쪽으로 당겨 안정시키는 기법.','3개월 데이터로 "상관 0.95"가 나왔다고 그대로 믿으면 안 되는 것과 같습니다. 짧은 표본에는 우연이 많이 섞여 있습니다.','가정'],
+'축소':['추정값의 극단적인 부분을 평균 쪽으로 당기는 것. 개별 값은 조금 부정확해지지만 전체 결과는 안정됩니다.','','가정'],
+'역행렬':['각 자산의 "다른 자산으로 설명되지 않는 고유한 부분"을 뽑아내는 계산.','비슷하게 움직이는 자산이 있으면 이 고유 부분이 아주 작아지고, 작은 수로 나누게 되어 계산이 불안정해집니다.','가정'],
+
+/* 방법론 */
+'평균-분산':['같은 위험에서 수익이 가장 높은 조합을 수학으로 찾는 고전적 방법.','이론은 완벽하지만 입력 오차에 극도로 취약합니다. 오차를 신호로 착각해 극단적인 답을 내놓아서 "오차 극대화기"라고도 불립니다.','방법론'],
+'Black-Litterman':['시장 전체 비중을 출발점으로 삼고, 확신이 있는 견해만큼만 거기서 벗어나는 방법.','확신이 없으면 시장 비중 그대로 갑니다. 그래서 극단적인 답이 안 나오고, "왜 이렇게 배분했나"를 설명할 수 있습니다.','방법론'],
+'리스크 패리티':['금액이 아니라 위험 기여도를 균등하게 나누는 방법.','주식 60 채권 40으로 담아도 위험은 90 대 10입니다. 이 착각을 걷어내는 것이 목적입니다.','방법론'],
+'계층적 리스크 패리티':['비슷한 자산끼리 묶은 뒤 위에서부터 반씩 쪼개 배분하는 방법.','역행렬을 쓰지 않아 안정적입니다. 사람이 "일단 주식에 얼마 넣을지 정하고 그 안에서 나눈다"고 생각하는 방식과 닮았습니다.','방법론'],
+'HRP':['계층적 리스크 패리티(Hierarchical Risk Parity)의 약자.','','방법론'],
+'최소분산':['수익률은 보지 않고 변동성만 가장 낮게 만드는 조합.','','방법론'],
+'로버스트':['기대수익률이 틀릴 가능성을 미리 깎고 계산하는 보수적 버전.','','방법론'],
+'역변동성':['변동성이 큰 자산은 적게, 작은 자산은 많이 담는 단순한 방법.','','방법론'],
+'동일가중':['모든 자산에 같은 금액을 넣는 방법.','단순해서 추정오차에 강하지만, 금액이 같다고 위험이 같은 건 아닙니다.','방법론'],
+'시장균형':['시장 전체가 실제로 들고 있는 비중. 아무 판단도 하지 않았을 때의 기본값입니다.','','방법론'],
+'위험 기여도':['포트폴리오 전체 변동 중 그 자산이 만들어내는 몫.','금액 비중과 다를 수 있습니다. 금액 20%인 자산이 위험의 43%를 만들기도 합니다.','방법론'],
+'보르다':['1위만 세는 대신 전 후보에 순위를 매기고 점수로 환산하는 집계 방식.','1위표는 적어도 두루 높은 평가를 받은 후보가 드러납니다. 호불호가 갈리는 후보와 구분됩니다.','방법론'],
+'순위 투표':['각자 전 후보에 1위부터 꼴찌까지 순위를 매기는 투표 방식.','','방법론'],
+
+/* 위험 */
+'스트레스 시나리오':['과거의 큰 위기가 다시 온다면 얼마나 잃을지 계산해보는 것.','','위험'],
+'CVaR':['최악의 5% 상황이 벌어졌을 때 평균적으로 얼마나 잃는지를 나타낸 값.','','위험'],
+'집중도':['위험이 몇 개 자산에 몰려 있는 정도.','','위험'],
+'유동성':['필요할 때 바로 현금으로 바꿀 수 있는 자산의 비중.','연금은 매달 지급해야 할 돈이 있어서, 아무리 수익이 좋아도 현금화가 안 되면 곤란합니다.','위험'],
+'최대낙폭':['고점 대비 가장 크게 떨어졌던 폭.','','위험'],
+
+/* 검증 */
+'백테스트':['과거 데이터로 "이 전략을 그때 썼다면 어땠을까"를 모의 실행해보는 것.','','검증'],
+'룩어헤드':['그 시점에 알 수 없었던 미래 정보가 분석에 섞여 들어가는 오류.','성과가 실제보다 좋아 보이게 만듭니다. 이 프로젝트에서 가장 위험한 함정입니다.','검증'],
+'학습 컷오프':['AI 모델이 학습한 데이터의 마지막 시점.','이 시점 이전 기간은 모델이 결과를 이미 알고 있을 수 있습니다. 그래서 그 구간의 백테스트 성과는 신뢰하기 어렵습니다.','검증'],
+'확신도 보정':['모델이 "80% 확신한다"고 말했을 때 실제로 80% 맞는지 확인하고 조정하는 것.','LLM은 틀린 답에도 자신 있게 답하는 경향이 있어서 이 확인이 필요합니다.','검증'],
+'대조군':['같은 통계 패턴에 가상의 날짜를 붙인 비교용 데이터.','진짜 데이터와 결과가 다르면, 지표가 아니라 시점 자체가 판단에 영향을 줬다는 뜻입니다.','검증'],
+
+/* AI */
+'에이전트':['특정 역할을 맡아 스스로 판단하는 AI 프로그램 단위.','이 파이프라인에서는 매크로 분석, 자산군별 추정, 포트폴리오 구축 등을 각각 다른 에이전트가 맡습니다.','AI'],
+'LLM-as-judge':['여러 결과 중 어느 것이 나은지 LLM에게 판정시키는 방식.','','AI'],
+'메타 에이전트':['다른 에이전트들의 과거 예측이 맞았는지 검사하고, 틀렸으면 그들의 코드나 프롬프트를 고쳐 쓰는 에이전트.','','AI'],
+
+/* 거시 */
+'후기 순환':['경기 확장이 끝나가는 국면. 아직 나쁘지 않지만 둔화 신호가 보이는 상태입니다.','','거시'],
+'장단기 금리차':['10년물 금리에서 2년물 금리를 뺀 값.','좁아지거나 역전되면 경기 둔화 신호로 봅니다.','거시'],
+'신용스프레드':['회사채와 국채의 금리 차이.','벌어지면 시장이 부도 위험을 크게 본다는 뜻입니다.','거시'],
+'PMI':['구매관리자지수. 기업 구매담당자들에게 설문해 만든 경기 지표입니다.','50이 기준선이고 그 아래면 수축 국면으로 봅니다.','거시'],
+'근원 CPI':['변동이 심한 식품과 에너지를 뺀 물가상승률.','','거시'],
+'실질 정책금리':['정책금리에서 물가상승률을 뺀 값.','플러스면 긴축적이라고 봅니다.','거시'],
+'실업률 갭':['실제 실업률과 물가를 자극하지 않는 수준의 실업률 차이.','마이너스면 노동시장이 과열됐다는 뜻입니다.','거시']
+};
+
+const PLAIN={
+s1:'이 파이프라인이 한 번 돌면 나오는 결과 요약입니다. 왼쪽 표가 최종 자산배분안이고, 오른쪽은 각 단계가 제대로 돌았는지와 과거 예측이 맞았는지를 보여줍니다.',
+s2:'"이렇게 돈을 굴리겠다"고 미리 정해둔 규칙을 AI가 읽을 수 있는 형태로 바꾼 화면입니다. 왼쪽이 사람이 쓴 문장, 오른쪽이 기계가 검사하는 조건식입니다. 하나라도 어기면 그 결과는 버려집니다.',
+s3:'지금 경기가 어느 국면인지 판단하는 단계입니다. 여기 판단이 틀리면 뒤의 14개 자산 추정이 전부 같은 방향으로 틀어집니다.',
+s4:'각 자산이 앞으로 얼마나 벌지 추정하는 단계입니다. 세 가지 방법으로 각각 계산한 뒤 AI가 최종값을 고릅니다. 맨 오른쪽 "확신도"는 그 추정을 얼마나 믿는지인데, 뒤에서 배분을 얼마나 기울일지 결정하는 값이라 중요합니다.',
+s5:'자산들이 서로 얼마나 같이 움직이는지 계산하는 단계입니다. 데이터가 부족해서 숫자가 들쭉날쭉한데, 그걸 안정시키는 보정을 합니다. 색이 진할수록 함께 움직인다는 뜻입니다.',
+s6:'같은 재료로 여러 방법이 각각 다른 답을 내놓는 걸 보여주는 화면입니다. 어느 방법이 옳은지 미리 알 수 없어서 전부 만들어놓고 비교합니다. 아래 "제약을 제거하면"은 규칙이 없을 때 얼마나 이상한 답이 나오는지 보여주는 예시입니다.',
+s7:'AI들이 서로의 결과를 비판하고 순위를 매기는 단계입니다. 1위표만 세지 않고 전체 순위를 점수로 환산하는데, 그래야 "일부는 열광하지만 나머지는 싫어하는" 후보와 "다들 무난하게 좋다고 하는" 후보를 구분할 수 있습니다.',
+s8:'투표와 별개로 각 후보가 위험한지 따로 검사하는 단계입니다. 과거 위기가 다시 오면 얼마나 잃을지, 위험이 몇 개 자산에 몰려 있는지, 급할 때 현금화가 되는지를 봅니다. 여기서 걸리면 득표가 높아도 비중이 깎입니다.',
+s9:'최종 결정 화면입니다. 하나를 고르지 않고 여러 방법을 섞는데, 섞으면 "왜 이렇게 배분했나"를 설명하기 어려워집니다. 그래서 각 자산의 최종 비중이 어느 방법에서 얼마씩 왔는지 쪼개서 보여줍니다.',
+s10:'"이 전략을 과거에 썼다면 어땠을까"를 시뮬레이션한 결과입니다. 중요한 건 세로 점선입니다. 그 왼쪽은 AI가 결과를 이미 알고 있었을 수 있는 기간이고, 오른쪽이 진짜 시험 구간입니다. 왼쪽에서만 성적이 좋다면 실력이 아니라 기억이었다는 뜻입니다.',
+s11:'앞의 결과를 믿어도 되는지 검사하는 화면입니다. AI가 진짜로 추론한 건지, 아니면 이미 아는 답을 그럴듯한 절차로 포장한 건지 세 가지 방법으로 확인합니다. 아래 그래프는 AI가 "80% 확신"이라고 말했을 때 실제로 몇 % 맞았는지를 보여줍니다.'
+};
+
+/* 화면별 쉬운 설명 삽입 */
+Object.keys(PLAIN).forEach(id=>{
+  const sec=document.getElementById(id); if(!sec) return;
+  const d=document.createElement('div'); d.className='plain';
+  d.innerHTML='<b>쉽게 말하면</b>'+PLAIN[id];
+  const head=sec.querySelector('.head');
+  head.parentNode.insertBefore(d, head.nextSibling);
+});
+
+/* 상단 토글 */
+const tg=document.createElement('div'); tg.className='sb-tg';
+tg.innerHTML='<span class="sw"></span><span>용어 도움말</span>';
+document.querySelector('.sb-flag').before(tg);
+tg.onclick=()=>document.body.classList.toggle('nogl');
+
+/* 용어집 버튼 */
+const rb=document.createElement('button'); rb.className='rail-btn'; rb.textContent='용어집 열기';
+document.querySelector('.rail-note').before(rb);
+rb.onclick=()=>{document.getElementById('gmodal').classList.add('on')};
+document.getElementById('gx').onclick=()=>document.getElementById('gmodal').classList.remove('on');
+document.getElementById('gmodal').onclick=e=>{if(e.target.id==='gmodal')e.currentTarget.classList.remove('on')};
+
+(()=>{const cats={};
+Object.entries(GL).forEach(([k,v])=>{(cats[v[2]]=cats[v[2]]||[]).push([k,v]);});
+document.getElementById('glist').innerHTML=Object.entries(cats).map(([c,items])=>
+`<div class="gcat">${c}</div>`+items.map(([k,v])=>
+`<div class="gitem"><b>${k}</b><span>${v[0]}${v[1]?' <em style="color:#657379;font-style:normal">'+v[1]+'</em>':''}</span></div>`).join('')).join('');})();
+
+/* 용어 자동 표시 — 화면당 첫 등장 1회만 */
+const TERMS=Object.keys(GL).sort((a,b)=>b.length-a.length);
+const SKIP=new Set(['SCRIPT','STYLE','PRE','CODE','TEXTAREA']);
+function wrap(root){
+  var seen=new Set();
+  root.querySelectorAll('.gl').forEach(function(g){seen.add(g.dataset.k);});
+  var pool=TERMS.filter(function(t){return !seen.has(t);});
+  if(!pool.length)return;
+  const wk=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:function(n){
+    if(!n.nodeValue.trim())return NodeFilter.FILTER_REJECT;
+    var p=n.parentNode;
+    while(p&&p!==root){
+      if(SKIP.has(p.nodeName))return NodeFilter.FILTER_REJECT;
+      if(p.classList&&(p.classList.contains('gl')||p.classList.contains('pop')||p.classList.contains('gitem')))
+        return NodeFilter.FILTER_REJECT;
+      p=p.parentNode;
+    }
+    return NodeFilter.FILTER_ACCEPT;}});
+  var nodes=[]; while(wk.nextNode())nodes.push(wk.currentNode);
+  nodes.forEach(function(n){
+    if(!pool.length)return;
+    var rest=n.nodeValue, frag=document.createDocumentFragment(), any=false;
+    while(rest){
+      var best=null,bi=-1;
+      for(var i=0;i<pool.length;i++){
+        var k=rest.indexOf(pool[i]);
+        if(k>-1&&(bi<0||k<bi||(k===bi&&pool[i].length>best.length))){best=pool[i];bi=k;}
+      }
+      if(!best)break;
+      if(bi>0)frag.appendChild(document.createTextNode(rest.slice(0,bi)));
+      var s=document.createElement('span');
+      s.className='gl'; s.dataset.k=best; s.textContent=best;
+      frag.appendChild(s); any=true;
+      pool.splice(pool.indexOf(best),1);
+      rest=rest.slice(bi+best.length);
+    }
+    if(!any)return;
+    if(rest)frag.appendChild(document.createTextNode(rest));
+    n.parentNode.replaceChild(frag,n);
+  });
+}
+document.querySelectorAll('.screen').forEach(wrap);
+
+/* 팝오버 */
+const pop=document.getElementById('pop');
+document.addEventListener('click',e=>{
+  const g=e.target.closest('.gl');
+  if(!g||document.body.classList.contains('nogl')){
+    if(!e.target.closest('#pop'))pop.classList.remove('on');
+    return;}
+  const v=GL[g.dataset.k]; if(!v)return;
+  pop.querySelector('.t').textContent=g.dataset.k;
+  pop.querySelector('.d').textContent=v[0];
+  const w=pop.querySelector('.w'); w.textContent=v[1]||''; w.style.display=v[1]?'block':'none';
+  pop.classList.add('on');
+  const r=g.getBoundingClientRect(), sy=window.scrollY, sx=window.scrollX;
+  let left=r.left+sx, top=r.bottom+sy+7;
+  if(left+320>window.innerWidth+sx)left=window.innerWidth+sx-322;
+  if(left<sx+6)left=sx+6;
+  pop.style.left=left+'px'; pop.style.top=top+'px';
+});
+document.getElementById('popx').onclick=()=>pop.classList.remove('on');
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){pop.classList.remove('on');
+  document.getElementById('gmodal').classList.remove('on');}});
+
+/* 표 재렌더 후 재적용 */
+document.querySelectorAll('[data-view],[data-cm]').forEach(function(c){
+  c.addEventListener('click',function(){
+    setTimeout(function(){
+      document.querySelectorAll('.screen.on').forEach(function(sc){wrap(sc);});['t-port','heat'].forEach(function(id){
+        var el=document.getElementById(id);
+        if(el)wrap(el);
+      });
+    },30);
+  });
+});
+</script>
+
+</body></html>

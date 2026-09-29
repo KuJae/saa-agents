@@ -1,0 +1,25 @@
+# 캐시 (도구·LLM 응답 — 재생성 가능)
+.cache/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+
+# 환경변수 — API 키가 들어갑니다. 절대 커밋 금지
+.env
+.env.*
+!.env.example
+
+# 에디터
+.DS_Store
+.idea/

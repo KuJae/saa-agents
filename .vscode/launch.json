@@ -1,0 +1,48 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "1개 시점 실행",
+      "type": "debugpy", "request": "launch",
+      "program": "${workspaceFolder}/run.py",
+      "args": ["once"],
+      "console": "integratedTerminal", "justMyCode": false
+    },
+    {
+      "name": "1개 시점 (캐시 초기화)",
+      "type": "debugpy", "request": "launch",
+      "program": "${workspaceFolder}/run.py",
+      "args": ["once", "--clear-cache"],
+      "console": "integratedTerminal", "justMyCode": false
+    },
+    {
+      "name": "백테스트 4개 시점",
+      "type": "debugpy", "request": "launch",
+      "program": "${workspaceFolder}/run.py",
+      "args": ["backtest", "--n", "4"],
+      "console": "integratedTerminal", "justMyCode": false
+    },
+    {
+      "name": "판단 편차 측정 20회",
+      "type": "debugpy", "request": "launch",
+      "program": "${workspaceFolder}/run.py",
+      "args": ["variance", "--n", "20"],
+      "console": "integratedTerminal", "justMyCode": false
+    },
+    {
+      "name": "마스킹 대조",
+      "type": "debugpy", "request": "launch",
+      "program": "${workspaceFolder}/run.py",
+      "args": ["masked", "--clear-cache"],
+      "console": "integratedTerminal", "justMyCode": false
+    },
+    {
+      "name": "마스킹 대조 (누출 시뮬레이션)",
+      "type": "debugpy", "request": "launch",
+      "program": "${workspaceFolder}/run.py",
+      "args": ["masked", "--clear-cache"],
+      "env": { "SIMULATE_LEAKAGE": "1" },
+      "console": "integratedTerminal", "justMyCode": false
+    }
+  ]
+}
