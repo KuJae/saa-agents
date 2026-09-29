@@ -1,3 +1,6 @@
-langgraph>=0.2
+# _reference/scripts 실행에 필요
 numpy>=1.26
+pandas>=2.0
 scipy>=1.11
+# data/panel_monthly.csv 를 다시 받을 때만 필요 (_reference/fetch_data.py)
+yfinance>=0.2
