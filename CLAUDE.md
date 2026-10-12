@@ -113,6 +113,11 @@ IPS를 바꿔도 최종 비중이 변하지 않음 · 최종안이 변동성 하
   데이터 `backend/data/etf_monthly_returns.csv`(갱신: `backend/scripts/fetch_returns.py`). 링크 끝 `#backtest`로 바로 열림
   · `37b086c`: 데이터 연결 상태 패널(출처·받은 날짜·결측값, CSV 내려받기 `/api/backtest/data.csv`), ETF별 적용 비중·실제 성과,
     낙폭·연도별 수익률 차트, ETF×연도 수익률 원자료 표 추가
+- IPS 통제 (2026-10-13, 포크 `b466e06`, 사용자 승인으로 팀 계산 로직 중 CIO 단계만 수정): CRO 적격 후보만 결합,
+  결합안 재검사, 적격 0개·결합안 위반이면 `governance.status = escalated`(위원회 개입). 메모 IPS 문구는 계산값.
+  시연: 기본 적격 2/21(주식 56.5%) · 최대 변동성 8.5 → 1개(45.0%) · 최소 변동성 5 → 6개(48.4%) · 불가능 → 개입
+- 팀 레포 PR: <https://github.com/Placer-BAE/self-driving-portfolio/pull/1> (배포·백테스트·IPS 통제 5개 커밋).
+  병합되면 Render를 팀 레포로 연결해 레포 하나·주소 하나로
 
 ## 팀 레포 작업 방식 (2026-10-12 결정)
 
