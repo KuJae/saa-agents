@@ -98,6 +98,17 @@ IPS를 바꿔도 최종 비중이 변하지 않음 · 최종안이 변동성 하
 앙상블 비중의 70.1%가 위반 후보 · README·대본 수치 재현 안 됨 · 보르다 점수가 고정값 ·
 `requirements.txt`에 pandas 누락 · 국면 조정 버그 · LLM 호출 코드 없음.
 
+## 현재 방향 (2026-10-13 결정) — 이 절이 아래 내용보다 우선
+
+**검증은 보류하고 구현·배포 위주로 간다.** Placer-BAE가 만든 계산·화면은 맞다고 보고
+계산 로직(`backend/app/agents/*`, `pipeline.py`)은 건드리지 않는다. 아래 검증 결과와 PR 순서는
+참고용 기록이며, 사용자가 다시 요청하기 전에는 진행하지 않는다.
+
+- 라이브 데모: <https://self-driving-portfolio.onrender.com> (Render 무료 플랜, 포크 `main` 푸시 시 자동 재배포)
+- 배포 구성: 포크 루트의 `Dockerfile`(React 빌드 → FastAPI가 `/`에서 함께 제공), `render.yaml`
+- 무료 플랜이라 15분 무접속 후 첫 접속 약 1분, IPS 재실행은 약 9초 걸린다 (2026-10-13 측정)
+- 로컬 확인: 포크 폴더에서 `docker build -t self-driving-portfolio . && docker run -p 8000:8000 self-driving-portfolio`
+
 ## 팀 레포 작업 방식 (2026-10-12 결정)
 
 **Placer-BAE 위주로 간다.** 구조(6단계·21개 방법·앙상블·대시보드)와 API 형식
