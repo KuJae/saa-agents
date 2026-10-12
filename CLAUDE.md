@@ -111,6 +111,8 @@ IPS를 바꿔도 최종 비중이 변하지 않음 · 최종안이 변동성 하
 - 실데이터 백테스트 탭 (2026-10-13 추가, 포크 `521e490`): 최종안·21개 후보·60/40을 18개 ETF 실제 월간
   수익률(2013-07~2026-09, 분기 리밸런싱)로 계산. `backend/app/backtest.py`, `GET /api/backtest`,
   데이터 `backend/data/etf_monthly_returns.csv`(갱신: `backend/scripts/fetch_returns.py`). 링크 끝 `#backtest`로 바로 열림
+  · `37b086c`: 데이터 연결 상태 패널(출처·받은 날짜·결측값, CSV 내려받기 `/api/backtest/data.csv`), ETF별 적용 비중·실제 성과,
+    낙폭·연도별 수익률 차트, ETF×연도 수익률 원자료 표 추가
 
 ## 팀 레포 작업 방식 (2026-10-12 결정)
 
