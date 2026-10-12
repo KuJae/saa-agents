@@ -81,6 +81,20 @@ verify.py           검증 하네스
 docs/index.html     이전 설계의 목업 (새 구조 기준으로 다시 만들 예정)
 ```
 
+## 팀 레포 검증
+
+팀 제품은 [Placer-BAE/self-driving-portfolio](https://github.com/Placer-BAE/self-driving-portfolio)
+(FastAPI + React 웹앱)입니다. 이 레포는 그 코드를 검증하고, 옮길 기능을 먼저 시험하는 곳입니다.
+
+```bash
+git clone https://github.com/Placer-BAE/self-driving-portfolio.git
+pip install -r self-driving-portfolio/backend/requirements.txt pandas
+python3 audits/placer_bae.py self-driving-portfolio
+```
+
+팀 코드는 고치지 않고 실행만 해서, README·중간발표 대본·이사회 메모에 적힌 수치와 주장을
+실행 결과와 대조합니다(10개 항목). 커밋 `78ae658`(2026-10-12) 기준으로 작성했습니다.
+
 ## 이전 구현
 
 LangGraph 기반 이전 구현(22개 방법론 · 보르다 결합 · mock LLM · 백테스트)은
