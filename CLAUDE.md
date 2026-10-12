@@ -108,6 +108,9 @@ IPS를 바꿔도 최종 비중이 변하지 않음 · 최종안이 변동성 하
 - 배포 구성: 포크 루트의 `Dockerfile`(React 빌드 → FastAPI가 `/`에서 함께 제공), `render.yaml`
 - 무료 플랜이라 15분 무접속 후 첫 접속 약 1분, IPS 재실행은 약 9초 걸린다 (2026-10-13 측정)
 - 로컬 확인: 포크 폴더에서 `docker build -t self-driving-portfolio . && docker run -p 8000:8000 self-driving-portfolio`
+- 실데이터 백테스트 탭 (2026-10-13 추가, 포크 `521e490`): 최종안·21개 후보·60/40을 18개 ETF 실제 월간
+  수익률(2013-07~2026-09, 분기 리밸런싱)로 계산. `backend/app/backtest.py`, `GET /api/backtest`,
+  데이터 `backend/data/etf_monthly_returns.csv`(갱신: `backend/scripts/fetch_returns.py`). 링크 끝 `#backtest`로 바로 열림
 
 ## 팀 레포 작업 방식 (2026-10-12 결정)
 
